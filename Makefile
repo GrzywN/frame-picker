@@ -1,5 +1,6 @@
 build:
 	@proto use
+	@poetry lock
 	@poetry install
 
 run-profile:
