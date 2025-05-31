@@ -257,8 +257,8 @@ class ProcessingService:
             # Create frame result in database
             frame_result_data = {
                 "frame_index": i,
-                "score": frame_data["score"],
-                "timestamp": frame_data["timestamp"],
+                "score": float(frame_data["score"]),  # Konwersja np.float64 -> float
+                "timestamp": float(frame_data["timestamp"]),  # Bezpieczna konwersja
                 "file_path": str(file_path),
                 "file_size": file_size,
                 "width": processed_image.width,
