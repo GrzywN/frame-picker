@@ -19,4 +19,7 @@ format:
 	@poetry run isort .
 	@poetry run black .
 
+test:
+	@poetry run pytest
+
 .PHONY: build cli-run-profile cli-run-action api frontend
