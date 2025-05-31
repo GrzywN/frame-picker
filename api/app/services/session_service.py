@@ -2,7 +2,7 @@
 Session management service using PostgreSQL
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session as DBSession
@@ -19,9 +19,21 @@ class SessionService:
         self.db = db
         self.session_repo = SessionRepository(db)
 
+    def _now_utc(self) -> datetime:
+        """Get current UTC datetime with timezone info"""
+        return datetime.now(timezone.utc)
+
+    def _to_utc(self, dt: datetime) -> datetime:
+        """Convert datetime to UTC with timezone info"""
+        if dt.tzinfo is None:
+            # If naive datetime, assume it's UTC
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
     async def create_session(self, session_id: str) -> Dict[str, Any]:
         """Create a new session"""
-        expires_at = datetime.now() + timedelta(hours=settings.SESSION_EXPIRE_HOURS)
+        now = self._now_utc()
+        expires_at = now + timedelta(hours=settings.SESSION_EXPIRE_HOURS)
 
         session = self.session_repo.create_session(session_id, expires_at)
 
@@ -29,9 +41,11 @@ class SessionService:
             "session_id": session.session_id,
             "status": session.status,
             "message": session.message,
-            "created_at": session.created_at.isoformat(),
+            "created_at": self._to_utc(session.created_at).isoformat(),
             "expires_at": (
-                session.expires_at.isoformat() if session.expires_at else None
+                self._to_utc(session.expires_at).isoformat()
+                if session.expires_at
+                else None
             ),
         }
 
@@ -42,8 +56,11 @@ class SessionService:
         if not session:
             return None
 
-        if session.expires_at and session.expires_at < datetime.now():
-            return None
+        # Check if session expired
+        if session.expires_at:
+            session_expires_at = self._to_utc(session.expires_at)
+            if session_expires_at < self._now_utc():
+                return None
 
         return {
             "session_id": session.session_id,
@@ -51,9 +68,11 @@ class SessionService:
             "message": session.message,
             "progress": session.progress,
             "error": session.error,
-            "created_at": session.created_at.isoformat(),
+            "created_at": self._to_utc(session.created_at).isoformat(),
             "expires_at": (
-                session.expires_at.isoformat() if session.expires_at else None
+                self._to_utc(session.expires_at).isoformat()
+                if session.expires_at
+                else None
             ),
         }
 
@@ -63,6 +82,9 @@ class SessionService:
 
         if not session:
             return False
+
+        # Add updated_at timestamp
+        updates["updated_at"] = self._now_utc()
 
         self.session_repo.update(session, **updates)
         return True
@@ -74,5 +96,6 @@ class SessionService:
         if not session:
             return False
 
+        # Cleanup will cascade to related records (video files, processing jobs, frame results)
         self.session_repo.delete(session)
         return True

@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
+from sqlalchemy.orm import Session as DBSession
+
 # Ensure frame_picker is importable
 project_root = Path(__file__).parent.parent.parent.parent
 if str(project_root) not in sys.path:
@@ -22,77 +24,181 @@ except ImportError as e:
 
 from ..config import settings
 from ..models import FrameResult, ProcessRequest
-from .session_service import SessionService
-from .video_service import VideoService
+from ..repositories.processing_repository import ProcessingRepository
+from ..repositories.session_repository import SessionRepository
+from ..repositories.video_repository import VideoRepository
 
 
 class ProcessingService:
     """Handles video processing using frame_picker core logic"""
 
-    def __init__(self):
-        self.session_service = SessionService()
-        self.video_service = VideoService()
+    def __init__(self, db: DBSession):
+        self.db = db
+        self.session_repo = SessionRepository(db)
+        self.video_repo = VideoRepository(db)
+        self.processing_repo = ProcessingRepository(db)
 
-    async def process_video_background(
-        self, session_id: str, file_info: Dict[str, Any], request: ProcessRequest
-    ):
-        """
-        Background task for video processing
-        """
+    async def create_processing_job(self, session_id: str, request: ProcessRequest):
+        """Create a new processing job in database"""
+        # Get session
+        session = self.session_repo.get_by_session_id(session_id)
+        if not session:
+            raise ValueError("Session not found")
+
+        # Get video file for this session
+        video_files = self.video_repo.get_by_session_id(session.id)
+        if not video_files:
+            raise ValueError("No video file found for session")
+
+        video_file = video_files[0]  # Take the first (and should be only) video file
+
+        # Create processing job
+        job = self.processing_repo.create_processing_job(
+            session_id=session.id,
+            video_file_id=video_file.id,
+            params=request.model_dump(),
+        )
+
+        return job
+
+    async def process_video_background(self, job_id: str, request: ProcessRequest):
+        """Background task for video processing"""
         try:
+            # Get processing job
+            job = self.processing_repo.get_by_id(job_id)
+            if not job:
+                raise ValueError("Processing job not found")
+
+            # Update job status
+            self.processing_repo.update_job_status(job, "running", progress=10)
+
             # Update session status
-            await self.session_service.update_session(
-                session_id,
-                {
-                    "status": "processing",
-                    "message": "Starting video analysis...",
-                    "progress": 10,
-                },
+            await self._update_session_status(
+                job.session.session_id, "processing", "Starting video analysis...", 10
             )
 
             if FRAME_PICKER_AVAILABLE:
-                results = await self._process_with_frame_picker(
-                    session_id, file_info, request
-                )
+                results = await self._process_with_frame_picker(job, request)
             else:
-                results = await self._mock_processing(session_id, file_info, request)
+                results = await self._mock_processing(job, request)
+
+            # Update job as completed
+            self.processing_repo.update_job_status(job, "completed", progress=100)
 
             # Update session with results
-            await self.session_service.update_session(
-                session_id,
-                {
-                    "status": "completed",
-                    "message": f"Processing completed successfully. Found {len(results)} frame(s).",
-                    "progress": 100,
-                    "results": [result.model_dump() for result in results],
-                },
+            await self._update_session_status(
+                job.session.session_id,
+                "completed",
+                f"Processing completed successfully. Found {len(results)} frame(s).",
+                100,
             )
 
         except Exception as e:
-            # Update session with error
-            await self.session_service.update_session(
-                session_id,
-                {
-                    "status": "failed",
-                    "message": f"Processing failed: {str(e)}",
-                    "progress": 0,
-                    "error": str(e),
-                },
+            # Update job as failed
+            if "job" in locals():
+                self.processing_repo.update_job_status(job, "failed", error=str(e))
+
+                # Update session with error
+                await self._update_session_status(
+                    job.session.session_id,
+                    "failed",
+                    f"Processing failed: {str(e)}",
+                    0,
+                    str(e),
+                )
+
+            print(f"Processing error for job {job_id}: {e}")
+
+    async def get_results(self, session_id: str) -> List[FrameResult]:
+        """Get processing results for a session"""
+        session = self.session_repo.get_by_session_id(session_id)
+        if not session:
+            raise ValueError("Session not found")
+
+        if session.status != "completed":
+            raise ValueError("Processing not completed yet")
+
+        # Get processing jobs for this session
+        jobs = self.processing_repo.get_by_session_id(session.id)
+        if not jobs:
+            return []
+
+        # Get the latest completed job
+        completed_job = None
+        for job in jobs:
+            if job.status == "completed":
+                completed_job = job
+                break
+
+        if not completed_job:
+            return []
+
+        # Convert frame results to FrameResult models
+        results = []
+        for frame_result in completed_job.frame_results:
+            result = FrameResult(
+                frame_index=frame_result.frame_index,
+                score=frame_result.score,
+                timestamp=frame_result.timestamp,
+                file_path=frame_result.file_path,
+                download_url=f"/api/sessions/{session_id}/download/{frame_result.frame_index}",
+                width=frame_result.width,
+                height=frame_result.height,
+                file_size=frame_result.file_size,
             )
-            print(f"Processing error for session {session_id}: {e}")
+            results.append(result)
+
+        # Sort by frame index
+        results.sort(key=lambda x: x.frame_index)
+        return results
+
+    async def get_frame_file_path(self, session_id: str, frame_index: int) -> str:
+        """Get file path for a specific frame"""
+        session = self.session_repo.get_by_session_id(session_id)
+        if not session:
+            raise ValueError("Session not found")
+
+        jobs = self.processing_repo.get_by_session_id(session.id)
+        for job in jobs:
+            if job.status == "completed":
+                for frame_result in job.frame_results:
+                    if frame_result.frame_index == frame_index:
+                        return frame_result.file_path
+
+        raise ValueError("Frame not found")
+
+    async def _update_session_status(
+        self,
+        session_id: str,
+        status: str,
+        message: str,
+        progress: int,
+        error: str = None,
+    ):
+        """Update session status"""
+        session = self.session_repo.get_by_session_id(session_id)
+        if session:
+            update_data = {"status": status, "message": message, "progress": progress}
+            if error:
+                update_data["error"] = error
+
+            self.session_repo.update(session, **update_data)
 
     async def _process_with_frame_picker(
-        self, session_id: str, file_info: Dict[str, Any], request: ProcessRequest
+        self, job, request: ProcessRequest
     ) -> List[FrameResult]:
-        """
-        Process video using the actual frame_picker core logic
-        """
-        video_path = Path(file_info["file_path"])
-        results_dir = self.video_service.get_session_results_dir(session_id)
+        """Process video using the actual frame_picker core logic"""
+        video_file = job.video_file
+        video_path = Path(video_file.file_path)
+
+        # Create results directory for this session
+        results_dir = settings.RESULTS_DIR / job.session.session_id
+        results_dir.mkdir(exist_ok=True)
 
         # Update progress
-        await self.session_service.update_session(
-            session_id, {"message": "Extracting frames from video...", "progress": 20}
+        self.processing_repo.update_job_status(job, "running", progress=20)
+        await self._update_session_status(
+            job.session.session_id, "processing", "Extracting frames from video...", 20
         )
 
         # Initialize frame picker components
@@ -106,9 +212,12 @@ class ProcessingService:
             raise Exception("No frames could be extracted from the video")
 
         # Update progress
-        await self.session_service.update_session(
-            session_id,
-            {"message": f"Analyzing {len(frames)} frames...", "progress": 50},
+        self.processing_repo.update_job_status(job, "running", progress=50)
+        await self._update_session_status(
+            job.session.session_id,
+            "processing",
+            f"Analyzing {len(frames)} frames...",
+            50,
         )
 
         # Select best frames
@@ -120,8 +229,9 @@ class ProcessingService:
             raise Exception("Could not select suitable frames")
 
         # Update progress
-        await self.session_service.update_session(
-            session_id, {"message": "Saving selected frames...", "progress": 80}
+        self.processing_repo.update_job_status(job, "running", progress=80)
+        await self._update_session_status(
+            job.session.session_id, "processing", "Saving selected frames...", 80
         )
 
         # Save frames and create results
@@ -144,13 +254,26 @@ class ProcessingService:
             # Get file size
             file_size = file_path.stat().st_size
 
-            # Create result
+            # Create frame result in database
+            frame_result_data = {
+                "frame_index": i,
+                "score": frame_data["score"],
+                "timestamp": frame_data["timestamp"],
+                "file_path": str(file_path),
+                "file_size": file_size,
+                "width": processed_image.width,
+                "height": processed_image.height,
+            }
+
+            self.processing_repo.add_frame_result(job.id, frame_result_data)
+
+            # Create result for return
             result = FrameResult(
                 frame_index=i,
                 score=frame_data["score"],
                 timestamp=frame_data["timestamp"],
                 file_path=str(file_path),
-                download_url=f"/api/sessions/{session_id}/download/{i}",
+                download_url=f"/api/sessions/{job.session.session_id}/download/{i}",
                 width=processed_image.width,
                 height=processed_image.height,
                 file_size=file_size,
@@ -159,33 +282,31 @@ class ProcessingService:
 
         return results
 
-    async def _mock_processing(
-        self, session_id: str, file_info: Dict[str, Any], request: ProcessRequest
-    ) -> List[FrameResult]:
-        """
-        Mock processing for development/testing when frame_picker core is not available
-        """
+    async def _mock_processing(self, job, request: ProcessRequest) -> List[FrameResult]:
+        """Mock processing for development/testing"""
         import random
 
         from PIL import Image, ImageDraw, ImageFont
 
-        results_dir = self.video_service.get_session_results_dir(session_id)
+        # Create results directory for this session
+        results_dir = settings.RESULTS_DIR / job.session.session_id
+        results_dir.mkdir(exist_ok=True)
 
         # Simulate processing time
         await asyncio.sleep(2)
 
         # Update progress
-        await self.session_service.update_session(
-            session_id,
-            {
-                "message": "Mock processing - generating sample frames...",
-                "progress": 50,
-            },
+        self.processing_repo.update_job_status(job, "running", progress=50)
+        await self._update_session_status(
+            job.session.session_id,
+            "processing",
+            "Mock processing - generating sample frames...",
+            50,
         )
 
         # Create mock frames
         results = []
-        video_duration = file_info.get("duration", 30.0)
+        video_duration = job.video_file.duration or 30.0
 
         for i in range(request.count):
             # Generate mock frame
@@ -223,13 +344,26 @@ class ProcessingService:
             file_path = results_dir / filename
             img.save(str(file_path), "JPEG", quality=85)
 
-            # Create result
+            # Create frame result in database
+            frame_result_data = {
+                "frame_index": i,
+                "score": random.uniform(0.7, 0.95),
+                "timestamp": random.uniform(0, video_duration),
+                "file_path": str(file_path),
+                "file_size": file_path.stat().st_size,
+                "width": img.width,
+                "height": img.height,
+            }
+
+            self.processing_repo.add_frame_result(job.id, frame_result_data)
+
+            # Create result for return
             result = FrameResult(
                 frame_index=i,
-                score=random.uniform(0.7, 0.95),
-                timestamp=random.uniform(0, video_duration),
+                score=frame_result_data["score"],
+                timestamp=frame_result_data["timestamp"],
                 file_path=str(file_path),
-                download_url=f"/api/sessions/{session_id}/download/{i}",
+                download_url=f"/api/sessions/{job.session.session_id}/download/{i}",
                 width=img.width,
                 height=img.height,
                 file_size=file_path.stat().st_size,
@@ -317,9 +451,7 @@ class ProcessingService:
     async def get_processing_estimate(
         self, file_info: Dict[str, Any], request: ProcessRequest
     ) -> int:
-        """
-        Estimate processing time in seconds
-        """
+        """Estimate processing time in seconds"""
         # Base time estimation
         duration = file_info.get("duration", 30)
         frame_count = file_info.get("frame_count", 900)
