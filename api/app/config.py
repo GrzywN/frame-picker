@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # File Upload Settings
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB for free tier
 
+    # Session Settings
+    SESSION_EXPIRE_HOURS: int = 24
+
     # Storage Settings
     UPLOAD_DIR: Path = Path("uploads")
     RESULTS_DIR: Path = Path("results")
