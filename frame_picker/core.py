@@ -104,13 +104,23 @@ class FrameSelector:
         except Exception:
             self.face_cascade = None
             
-    def select_best_frame(self, frames: List[FrameData]) -> Optional[Dict]:
-        """Select the best frame from the list"""
-        if not frames:
-            return None
-            
-        scored_frames = []
+    def select_best_frames(self, frames: List[FrameData], count: int = 1, min_interval: float = 2.0) -> List[Dict]:
+        """
+        Select the best N frames from the list with minimum time interval between them
         
+        Args:
+            frames: List of FrameData objects to analyze
+            count: Number of best frames to return (default: 1)
+            min_interval: Minimum time interval between selected frames in seconds (default: 2.0)
+            
+        Returns:
+            List of dictionaries containing frame data, scores, and timestamps
+        """
+        if not frames:
+            return []
+            
+        # Score all frames first
+        scored_frames = []
         for frame_data in frames:
             score = self._score_frame(frame_data)
             scored_frames.append({
@@ -119,10 +129,41 @@ class FrameSelector:
                 'timestamp': frame_data.timestamp
             })
             
-        # Sort by score (highest first) and return the best
+        # Sort by score (highest first)
         scored_frames.sort(key=lambda x: x['score'], reverse=True)
         
-        return scored_frames[0] if scored_frames else None
+        # If only one frame requested, return the best one
+        if count == 1:
+            return scored_frames[:1] if scored_frames else []
+            
+        # Select frames with minimum interval constraint
+        selected_frames = []
+        
+        for candidate in scored_frames:
+            # Check if this frame is far enough from already selected frames
+            is_valid = True
+            for selected in selected_frames:
+                time_diff = abs(candidate['timestamp'] - selected['timestamp'])
+                if time_diff < min_interval:
+                    is_valid = False
+                    break
+                    
+            if is_valid:
+                selected_frames.append(candidate)
+                
+                # Stop if we have enough frames
+                if len(selected_frames) >= count:
+                    break
+                    
+        # Sort selected frames by timestamp for consistent output
+        selected_frames.sort(key=lambda x: x['timestamp'])
+        
+        return selected_frames
+        
+    def select_best_frame(self, frames: List[FrameData]) -> Optional[Dict]:
+        """Select the best single frame from the list (backward compatibility)"""
+        results = self.select_best_frames(frames, count=1)
+        return results[0] if results else None
         
     def _score_frame(self, frame_data: FrameData) -> float:
         """Score a frame based on quality metrics"""
@@ -149,13 +190,6 @@ class FrameSelector:
                 brightness_score * 0.2 +
                 contrast_score * 0.2 +
                 face_score * 0.2 +
-                composition_score * 0.1
-            )
-        elif self.mode == 'sports':
-            total_score = (
-                motion_score * 0.4 +
-                pose_score * 0.3 +
-                sharpness_score * 0.2 +
                 composition_score * 0.1
             )
         else:
