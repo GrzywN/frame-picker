@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:17.5-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=framepicker
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=framepicker
+    container_name: framepicker_postgres
+    ports:
+      - '5432:5432'
+    volumes: 
+      - db:/var/lib/postgresql/data
+volumes:
+  db:
+    driver: local

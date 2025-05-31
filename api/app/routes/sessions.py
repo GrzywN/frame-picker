@@ -4,17 +4,19 @@ Session management endpoints
 
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from ..dependencies import get_session_service
 from ..models import SessionCreate, SessionResponse
 from ..services.session_service import SessionService
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
-session_service = SessionService()
 
 
 @router.post("", response_model=SessionResponse)
-async def create_session():
+async def create_session(
+    session_service: SessionService = Depends(get_session_service),
+):
     """Create a new session for video processing"""
     try:
         session_id = str(uuid.uuid4())
@@ -32,7 +34,9 @@ async def create_session():
 
 
 @router.get("/{session_id}", response_model=SessionResponse)
-async def get_session(session_id: str):
+async def get_session(
+    session_id: str, session_service: SessionService = Depends(get_session_service)
+):
     """Get session status and information"""
     try:
         session = await session_service.get_session(session_id)
@@ -54,7 +58,9 @@ async def get_session(session_id: str):
 
 
 @router.get("/{session_id}/status")
-async def get_processing_status(session_id: str):
+async def get_processing_status(
+    session_id: str, session_service: SessionService = Depends(get_session_service)
+):
     """Get current processing status"""
     try:
         session = await session_service.get_session(session_id)
@@ -76,7 +82,9 @@ async def get_processing_status(session_id: str):
 
 
 @router.delete("/{session_id}")
-async def cleanup_session(session_id: str):
+async def cleanup_session(
+    session_id: str, session_service: SessionService = Depends(get_session_service)
+):
     """Clean up session and associated files"""
     try:
         await session_service.cleanup_session(session_id)

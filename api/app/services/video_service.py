@@ -1,5 +1,5 @@
 """
-Video file handling service
+Video file handling service with database integration
 """
 
 from pathlib import Path
@@ -8,14 +8,20 @@ from typing import Any, Dict
 import aiofiles
 import cv2
 from fastapi import UploadFile
+from sqlalchemy.orm import Session as DBSession
 
 from ..config import settings
+from ..repositories.session_repository import SessionRepository
+from ..repositories.video_repository import VideoRepository
 
 
 class VideoService:
-    """Handles video file operations"""
+    """Handles video file operations with database storage"""
 
-    def __init__(self):
+    def __init__(self, db: DBSession):
+        self.db = db
+        self.video_repo = VideoRepository(db)
+        self.session_repo = SessionRepository(db)
         self.upload_dir = settings.UPLOAD_DIR
         self.results_dir = settings.RESULTS_DIR
 
@@ -24,9 +30,12 @@ class VideoService:
         self.results_dir.mkdir(exist_ok=True)
 
     async def save_upload(self, session_id: str, video: UploadFile) -> Dict[str, Any]:
-        """
-        Save uploaded video file and extract basic info
-        """
+        """Save uploaded video file and create database record"""
+        # Get session from database
+        session = self.session_repo.get_by_session_id(session_id)
+        if not session:
+            raise ValueError("Session not found")
+
         # Create session-specific directory
         session_dir = self.upload_dir / session_id
         session_dir.mkdir(exist_ok=True)
@@ -51,6 +60,9 @@ class VideoService:
             "content_type": video.content_type,
             **video_info,
         }
+
+        # Create database record
+        video_file = self.video_repo.create_video_file(session.id, file_info)
 
         return file_info
 

@@ -2,12 +2,15 @@
 Frame Picker API - FastAPI backend
 """
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 
 from .config import settings
+from .database.connection import engine
+from .database.models import Base
 from .routes import create_api_router
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Frame Picker API",

@@ -4,29 +4,26 @@ File download endpoints
 
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
-from ..services.session_service import SessionService
+from ..dependencies import get_processing_service
+from ..services.processing_service import ProcessingService
 
 router = APIRouter(prefix="/sessions", tags=["download"])
-session_service = SessionService()
 
 
 @router.get("/{session_id}/download/{frame_index}")
-async def download_frame(session_id: str, frame_index: int):
+async def download_frame(
+    session_id: str,
+    frame_index: int,
+    processing_service: ProcessingService = Depends(get_processing_service),
+):
     """Download a specific frame"""
     try:
-        session = await session_service.get_session(session_id)
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
-
-        results = session.get("results", [])
-        if frame_index >= len(results) or frame_index < 0:
-            raise HTTPException(status_code=404, detail="Frame not found")
-
-        frame_data = results[frame_index]
-        file_path = frame_data.get("file_path")
+        file_path = await processing_service.get_frame_file_path(
+            session_id, frame_index
+        )
 
         if not file_path or not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="Frame file not found")
