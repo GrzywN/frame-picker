@@ -15,4 +15,8 @@ api:
 frontend:
 	@npm run dev
 
+format:
+	@poetry run isort .
+	@poetry run black .
+
 .PHONY: build cli-run-profile cli-run-action api frontend
