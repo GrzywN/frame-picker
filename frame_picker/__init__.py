@@ -5,7 +5,7 @@ Frame Picker - AI-powered video frame selection for profile pictures and action 
 __version__ = "0.1.0"
 __author__ = "Karol Binkowski"
 
-from .core import FrameExtractor, FrameSelector, FrameData
 from .cli import main
+from .core import FrameData, FrameExtractor, FrameSelector
 
 __all__ = ["FrameExtractor", "FrameSelector", "FrameData", "main"]
