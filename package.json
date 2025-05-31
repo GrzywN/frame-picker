@@ -1,0 +1,27 @@
+{
+  "name": "frame-picker-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev frontend",
+    "build": "next build frontend",
+    "start": "next start frontend",
+    "lint": "next lint frontend"
+  },
+  "dependencies": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "next": "15.3.3"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "@types/node": "22.15.29",
+    "@types/react": "19.1.6",
+    "@types/react-dom": "19.1.5",
+    "@tailwindcss/postcss": "4.1.8",
+    "tailwindcss": "4.1.8",
+    "eslint": "9.28.0",
+    "eslint-config-next": "15.3.3",
+    "@eslint/eslintrc": "3.3.1"
+  }
+}

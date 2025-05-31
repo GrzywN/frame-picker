@@ -12,4 +12,7 @@ cli-run-action:
 api:
 	@poetry run frame-picker-api
 
-.PHONY: build cli-run-profile cli-run-action api
+frontend:
+	@npm run dev
+
+.PHONY: build cli-run-profile cli-run-action api frontend
