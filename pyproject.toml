@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "frame-picker"
+version = "0.1.0"
+description = "AI-powered video frame selection for profile pictures and action shots"
+authors = ["Karol Binkowski <karolbinkowski3@proton.me>"]
+readme = "README.md"
+packages = [{include = "frame_picker"}]
+
+[tool.poetry.dependencies]
+python = "3.13.3"
+click = "8.2.1"
+opencv-python = "4.11.0.86"
+pillow = "10.4.0"
+numpy = "2.2.6"
+
+[tool.poetry.scripts]
+frame-picker = "frame_picker.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.3.5"
+black = "24.10.0"
+isort = "5.13.2"
