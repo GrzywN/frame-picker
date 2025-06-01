@@ -23,10 +23,8 @@ pydantic-settings = "2.9.1"
 aiofiles = "24.1.0"
 redis = "6.2.0"
 python-dotenv = "1.1.0"
-alembic = "1.16.1"
-psycopg2-binary = "2.9.10"
-stripe = "12.2.0"
-python-jose = {extras = ["cryptography"], version = "3.5.0"}
+alembic = "^1.16.1"
+psycopg2-binary = "^2.9.10"
 
 [tool.poetry.scripts]
 frame-picker = "frame_picker.cli:main"
