@@ -1,34 +1,28 @@
 [tool.poetry]
 name = "frame-picker"
 version = "0.1.0"
-description = "AI-powered video frame selection for profile pictures and action shots"
+description = "AI-powered video frame selection microservice"
 authors = ["Karol Binkowski <karolbinkowski3@proton.me>"]
 readme = "README.md"
 packages = [
-    {include = "frame_picker"},
-    {include = "api"}
+    {include = "ai_service"}
 ]
 
 [tool.poetry.dependencies]
 python = "3.13.3"
-click = "8.2.1"
-opencv-python = "4.11.0.86"
-pillow = "11.2.1"
-numpy = "2.2.6"
+# AI service dependencies
 fastapi = "0.115.12"
 uvicorn = {extras = ["standard"], version = "0.34.2"}
 python-multipart = "0.0.20"
-pydantic = "2.11.5"
-pydantic-settings = "2.9.1"
-aiofiles = "24.1.0"
-redis = "6.2.0"
+opencv-python = "4.11.0.86"
+pillow = "11.2.1"
+numpy = "2.2.6"
+
+# Development
 python-dotenv = "1.1.0"
-alembic = "^1.16.1"
-psycopg2-binary = "^2.9.10"
 
 [tool.poetry.scripts]
-frame-picker = "frame_picker.cli:main"
-frame-picker-api = "api.app.main:run_server"
+ai-service = "ai_service.main:run_server"
 
 [build-system]
 requires = ["poetry-core"]
