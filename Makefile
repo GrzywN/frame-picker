@@ -13,6 +13,9 @@ api:
 frontend:
 	@npm run dev
 
+codegen:
+	@npx supabase gen types typescript --local > frontend/src/types/supabase.g.ts
+
 format:
 	@poetry run isort .
 	@poetry run black .
