@@ -25,6 +25,8 @@ redis = "6.2.0"
 python-dotenv = "1.1.0"
 alembic = "^1.16.1"
 psycopg2-binary = "^2.9.10"
+python-jose = {extras = ["cryptography"], version = "3.5.0"}
+bcrypt = "4.3.0"
 
 [tool.poetry.scripts]
 frame-picker = "frame_picker.cli:main"
