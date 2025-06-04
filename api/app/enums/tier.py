@@ -1,3 +1,6 @@
+from enum import Enum
+
+
 class Tier(str, Enum):
     """User tier types"""
 

@@ -26,7 +26,7 @@ class UserResponse(BaseModel):
 
     id: str
     email: str
-    tier: TierEnum
+    tier: Tier
     is_active: bool
     created_at: datetime
 
@@ -44,5 +44,5 @@ class CurrentUser(BaseModel):
 
     id: str
     email: str
-    tier: TierEnum
+    tier: Tier
     is_active: bool
