@@ -95,14 +95,17 @@ class SessionService:
         return True
 
     async def cleanup_session(self, session_id: str) -> bool:
-        """Clean up session and associated data"""
+        """Clean up session files but preserve database records for usage tracking"""
+        from ..services.video_service import VideoService
+
         session = self.session_repo.get_by_session_id(session_id)
 
         if not session:
             return False
 
-        # Cleanup will cascade to related records (video files, processing jobs, frame results)
-        self.session_repo.delete(session)
+        video_service = VideoService(self.db)
+        await video_service.cleanup_session_files(session_id)
+
         return True
 
     async def associate_user_with_session(self, session_id: str, user_id: str) -> bool:

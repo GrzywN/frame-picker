@@ -1,5 +1,6 @@
 """Usage tracking and limit checking service"""
 
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -23,12 +24,20 @@ class UsageService:
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
+        if isinstance(user_id, str):
+            try:
+                user_uuid = uuid.UUID(user_id)
+            except ValueError:
+                return 0
+        else:
+            user_uuid = user_id
+
         count = (
             self.db.query(func.count(ProcessingJob.id))
             .join(Session, ProcessingJob.session_id == Session.id)
             .filter(
                 and_(
-                    Session.user_id == user_id,
+                    Session.user_id == user_uuid,
                     ProcessingJob.status == "completed",
                     ProcessingJob.created_at >= month_start,
                 )
@@ -62,7 +71,7 @@ class UsageService:
     def check_user_limits(self, user: User) -> dict:
         """Check if user can process more videos"""
         limits = settings.get_tier_limits(user.tier)
-        current_usage = self.get_monthly_usage(user.id)
+        current_usage = self.get_monthly_usage(str(user.id))
 
         return {
             "can_process": current_usage < limits["videos_per_month"],
@@ -89,7 +98,7 @@ class UsageService:
         """Get usage statistics"""
         if user_id:
             # Authenticated user stats
-            user = self.db.query(User).filter(User.id == user_id).first()
+            user = self.db.query(User).filter(User.id == uuid.UUID(user_id)).first()
             if not user:
                 return {"error": "User not found"}
 

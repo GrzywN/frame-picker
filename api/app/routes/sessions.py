@@ -88,9 +88,9 @@ async def get_processing_status(
 async def cleanup_session(
     session_id: str, session_service: SessionService = Depends(get_session_service)
 ):
-    """Clean up session and associated files"""
+    """Clean up session files but preserve database records for usage tracking"""
     try:
         await session_service.cleanup_session(session_id)
-        return {"message": "Session cleaned up successfully"}
+        return {"message": "Session files cleaned up successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Cleanup failed: {str(e)}")
