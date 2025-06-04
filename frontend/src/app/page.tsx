@@ -9,10 +9,20 @@ import {
   SessionStatus,
   FrameResult,
 } from "@/lib/api";
-import { VideoUpload } from "@/features/upload/video-upload";
-import { ProcessingOptions } from "@/features/processing/processing-options";
-import { ProcessingStatus } from "@/features/status/processing-status";
-import { ResultsGallery } from "@/features/results/results-gallery";
+
+// Design System Components
+import { Navbar } from "@/shared/ui/organisms/navbar";
+import { UploadZone } from "@/shared/ui/organisms/upload-zone";
+import { ProcessingStatus } from "@/shared/ui/organisms/processing-status";
+import { ResultsGallery } from "@/shared/ui/organisms/results-gallery";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/shared/ui/molecules/card";
+import { FormField, Select } from "@/shared/ui/molecules/form-field";
+import { Button } from "@/shared/ui/atoms/button";
+import { Badge } from "@/shared/ui/atoms/badge";
+import { Progress } from "@/shared/ui/atoms/progress";
+import { AnimatedBg } from "@/shared/ui/atoms/animated-bg";
+import { BlobDecoration, OrganicShape } from "@/shared/ui/atoms/blob-decoration";
+import { cn } from "@/shared/lib/utils";
 
 type AppState = "upload" | "configure" | "processing" | "completed" | "error";
 
@@ -24,8 +34,18 @@ export default function HomePage() {
   const [results, setResults] = useState<FrameResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  // Processing options state
+  const [processingOptions, setProcessingOptions] = useState<ProcessRequest>({
+    mode: 'profile',
+    quality: 'balanced',
+    count: 1,
+    sample_rate: 30,
+    min_interval: 2.0,
+  });
 
   // Enhanced API client with auth
   const getAuthHeaders = () => {
@@ -74,10 +94,21 @@ export default function HomePage() {
   const handleVideoUpload = async (file: File) => {
     try {
       setIsUploading(true);
+      setUploadProgress(0);
       setError(null);
       setUploadedFile(file);
 
-      // Create session with auth headers
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
       console.log("Creating session...");
       const session = await fetch(`http://localhost:8000/api/sessions`, {
         method: 'POST',
@@ -88,13 +119,15 @@ export default function HomePage() {
       }).then(res => res.json());
       
       setSessionId(session.session_id);
-      console.log("Session created:", session.session_id);
+      setUploadProgress(50);
 
-      // Upload video
       console.log("Uploading video...");
       await apiClient.uploadVideo(session.session_id, file);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
       console.log("Video uploaded successfully");
-
       setAppState("configure");
     } catch (err) {
       console.error("Upload error:", err);
@@ -102,10 +135,11 @@ export default function HomePage() {
       setAppState("error");
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
-  const handleProcess = async (options: ProcessRequest) => {
+  const handleProcess = async () => {
     if (!sessionId) {
       setError("No session ID available");
       return;
@@ -115,7 +149,7 @@ export default function HomePage() {
       setIsProcessing(true);
       setError(null);
 
-      console.log("Starting processing with options:", options);
+      console.log("Starting processing with options:", processingOptions);
       
       const response = await fetch(`http://localhost:8000/api/sessions/${sessionId}/process`, {
         method: 'POST',
@@ -123,7 +157,7 @@ export default function HomePage() {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify(options),
+        body: JSON.stringify(processingOptions),
       });
 
       if (!response.ok) {
@@ -178,302 +212,474 @@ export default function HomePage() {
       setIsUploading(false);
       setIsProcessing(false);
       setUploadedFile(null);
+      setProcessingOptions({
+        mode: 'profile',
+        quality: 'balanced',
+        count: 1,
+        sample_rate: 30,
+        min_interval: 2.0,
+      });
     }
   };
 
-  const getStepOpacity = (step: AppState): number => {
-    const steps: AppState[] = [
-      "upload",
-      "configure", 
-      "processing",
-      "completed",
-    ];
+  const getStepProgress = (step: AppState): number => {
+    const steps: AppState[] = ["upload", "configure", "processing", "completed"];
     const currentIndex = steps.indexOf(appState);
     const stepIndex = steps.indexOf(step);
-
-    if (appState === "error") {
-      return stepIndex <= 0 ? 1 : 0.3;
-    }
-
-    return stepIndex <= currentIndex ? 1 : 0.4;
+    
+    if (appState === "error") return stepIndex <= 0 ? 100 : 0;
+    if (stepIndex < currentIndex) return 100;
+    if (stepIndex === currentIndex) return 50;
+    return 0;
   };
 
   return (
-    <main className="container">
-      {/* Header */}
-      <nav>
-        <ul>
-          <li>
-            <strong>🎬 Frame Picker</strong>
-          </li>
-        </ul>
-        <ul>
-          <li>
-            {isAuthenticated ? (
-              <a href="/dashboard" style={{ marginRight: '1rem' }}>
-                👤 Dashboard
-              </a>
-            ) : (
-              <>
-                <a href="/auth/login" style={{ marginRight: '1rem' }}>
-                  🔑 Login
-                </a>
-                <a href="/auth/register">
-                  🆕 Register
-                </a>
-              </>
-            )}
-          </li>
-        </ul>
-      </nav>
+    <AnimatedBg variant="blobs" intensity="low" className="min-h-screen">
+      {/* Navigation */}
+      <Navbar user={user} onSignOut={() => {/* Handle sign out */}} />
 
-      {/* Usage Stats for Authenticated Users */}
-      {isAuthenticated && (
-        <div style={{ marginBottom: '2rem' }}>
-          <UsageStats />
-        </div>
-      )}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-8 relative">
+        {/* Decorative Elements */}
+        <BlobDecoration 
+          size="xl" 
+          color="gradient" 
+          position="top-right" 
+          className="opacity-10" 
+        />
+        
+        <OrganicShape 
+          variant="squiggle" 
+          size="lg" 
+          color="blue" 
+          className="top-20 left-10 opacity-20" 
+        />
 
-      {/* Error Display */}
-      {error && (
-        <article
-          style={{
-            backgroundColor: "#f8d7da",
-            borderColor: "#f5c6cb",
-            color: "#721c24",
-            marginBottom: "2rem",
-          }}
-        >
-          <header>
-            <strong>❌ Error</strong>
-          </header>
-          <p>{error}</p>
-          <footer>
-            <button onClick={handleReset} className="outline">
-              🔄 Try Again
-            </button>
-          </footer>
-        </article>
-      )}
+        {/* Usage Stats for Authenticated Users */}
+        {isAuthenticated && (
+          <div className="mb-8 relative">
+            <UsageStats />
+            <OrganicShape 
+              variant="blob2" 
+              size="md" 
+              color="green" 
+              className="top-0 right-0 opacity-15" 
+            />
+          </div>
+        )}
 
-      {/* Step Indicator */}
-      <div style={{ marginBottom: "2rem" }}>
-        <nav aria-label="breadcrumb">
-          <ul
-            style={{
-              display: "flex",
-              listStyle: "none",
-              padding: 0,
-              gap: "1rem",
-              justifyContent: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <li
-              style={{
-                opacity: getStepOpacity("upload"),
-                fontWeight: appState === "upload" ? "bold" : "normal",
-              }}
-            >
-              <span>1️⃣ Upload</span>
-            </li>
-            <li
-              style={{
-                opacity: getStepOpacity("configure"),
-                fontWeight: appState === "configure" ? "bold" : "normal",
-              }}
-            >
-              <span>2️⃣ Configure</span>
-            </li>
-            <li
-              style={{
-                opacity: getStepOpacity("processing"),
-                fontWeight: appState === "processing" ? "bold" : "normal",
-              }}
-            >
-              <span>3️⃣ Processing</span>
-            </li>
-            <li
-              style={{
-                opacity: getStepOpacity("completed"),
-                fontWeight: appState === "completed" ? "bold" : "normal",
-              }}
-            >
-              <span>4️⃣ Results</span>
-            </li>
-          </ul>
-        </nav>
-      </div>
+        {/* Error Display */}
+        {error && (
+          <Card variant="default" className="mb-8 bg-warning-orange/10 border-warning-orange relative overflow-hidden">
+            <BlobDecoration size="lg" color="gold" position="bottom-right" className="opacity-30" />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-warning-orange relative z-10">
+                ❌ ERROR
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="relative z-10">
+              <p className="font-mono text-body text-void-black mb-4">{error}</p>
+            </CardContent>
+            <CardFooter className="relative z-10">
+              <Button onClick={handleReset} variant="secondary">
+                🔄 TRY AGAIN
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
 
-      {/* Main Content Based on State */}
-      {appState === "upload" && (
-        <section>
-          <VideoUpload
-            onUpload={handleVideoUpload}
-            isUploading={isUploading}
-            disabled={isUploading}
-          />
-
-          {/* Info Section */}
-          <article style={{ marginTop: "2rem" }}>
-            <header>🎯 How it works</header>
-            <ol>
-              <li>
-                <strong>Upload</strong> your video (MP4, AVI, MOV, WebM)
-              </li>
-              <li>
-                <strong>Configure</strong> processing options (mode, quality,
-                count)
-              </li>
-              <li>
-                <strong>Process</strong> using AI to find the best frames
-              </li>
-              <li>
-                <strong>Download</strong> high-quality extracted frames
-              </li>
-            </ol>
-            <footer>
-              <small>
-                {isAuthenticated ? (
-                  <span>
-                    <strong>Authenticated:</strong> {user?.tier === 'FREE' ? '3 videos/month' : '100 videos/month'}, 
-                    {user?.tier === 'FREE' ? ' 720p with watermark' : ' 1080p no watermark'}
-                  </span>
-                ) : (
-                  <span>
-                    <strong>Anonymous:</strong> 1 video/day, 720p with watermark. 
-                    <a href="/auth/register" style={{ marginLeft: '0.5rem' }}>
-                      Register for more!
-                    </a>
-                  </span>
-                )}
-              </small>
-            </footer>
-          </article>
-        </section>
-      )}
-
-      {/* Rest of the component remains the same... */}
-      {appState === "configure" && (
-        <section>
-          {/* Upload Summary */}
-          {uploadedFile && (
-            <article style={{ marginBottom: "2rem" }}>
-              <header>📁 Uploaded Video</header>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1rem",
-                }}
-              >
-                <div>
-                  <strong>File:</strong> {uploadedFile.name}
-                </div>
-                <div>
-                  <strong>Size:</strong>{" "}
-                  {(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB
-                </div>
-                <div>
-                  <strong>Type:</strong> {uploadedFile.type}
-                </div>
-                <div>
-                  <strong>Session:</strong>{" "}
-                  <code style={{ fontSize: "0.8rem" }}>
-                    {sessionId?.slice(0, 8)}...
-                  </code>
-                </div>
+        {/* Step Indicator */}
+        <AnimatedBg variant="grid" intensity="low" className="mb-8">
+          <Card variant="dark" className="relative overflow-hidden">
+            <BlobDecoration size="lg" color="blue" position="top-left" className="opacity-20" />
+            <BlobDecoration size="md" color="purple" position="bottom-right" className="opacity-20" />
+            <CardContent className="p-6 relative z-10">
+              <div className="grid grid-cols-4 gap-4">
+                {[
+                  { step: "upload", label: "UPLOAD", icon: "📤" },
+                  { step: "configure", label: "CONFIGURE", icon: "⚙️" },
+                  { step: "processing", label: "PROCESSING", icon: "🤖" },
+                  { step: "completed", label: "RESULTS", icon: "🎯" },
+                ].map(({ step, label, icon }, index) => {
+                  const isActive = appState === step;
+                  const isCompleted = getStepProgress(step as AppState) === 100;
+                  const progress = getStepProgress(step as AppState);
+                  
+                  return (
+                    <div key={step} className="text-center relative">
+                      {index < 3 && (
+                        <OrganicShape 
+                          variant="lightning" 
+                          size="sm" 
+                          color="gold" 
+                          className="top-1/2 -right-4 opacity-30" 
+                        />
+                      )}
+                      <div className={cn(
+                        "text-3xl mb-2 transition-all duration-300",
+                        isActive && "scale-110",
+                        isCompleted ? "opacity-100" : "opacity-50"
+                      )}>
+                        {icon}
+                      </div>
+                      <div className={cn(
+                        "font-mono text-caption font-bold uppercase tracking-wide",
+                        isActive ? "text-electric-blue" : "text-gray-200"
+                      )}>
+                        {label}
+                      </div>
+                      <div className="mt-2">
+                        <Progress value={progress} size="sm" />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </article>
-          )}
+            </CardContent>
+          </Card>
+        </AnimatedBg>
 
-          <ProcessingOptions
-            onProcess={handleProcess}
-            isProcessing={isProcessing}
-            disabled={isProcessing}
-          />
-        </section>
-      )}
+        {/* Main Content Based on State */}
+        {appState === "upload" && (
+          <div className="space-y-8 relative">
+            <OrganicShape 
+              variant="blob3" 
+              size="lg" 
+              color="green" 
+              className="top-0 left-1/4 opacity-10" 
+            />
+            
+            <UploadZone
+              onUpload={handleVideoUpload}
+              isUploading={isUploading}
+              uploadProgress={uploadProgress}
+              disabled={isUploading}
+              maxSize={100 * 1024 * 1024} // 100MB
+              className="relative"
+            />
 
-      {(appState === "processing" || appState === "completed") && (
-        <section>
-          <ProcessingStatus status={status} sessionId={sessionId} />
+            {/* Info Section with Animated Background */}
+            <AnimatedBg variant="waves" intensity="low">
+              <Card variant="default" hover className="relative overflow-hidden">
+                <BlobDecoration size="xl" color="gradient" position="center" className="opacity-5" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-3">
+                    🎯 HOW IT WORKS
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                      { step: "1", title: "Upload", desc: "Upload your video file (MP4, AVI, MOV, WebM)", color: "blue" },
+                      { step: "2", title: "Configure", desc: "Choose processing mode and quality settings", color: "green" },
+                      { step: "3", title: "Process", desc: "AI analyzes your video to find the best frames", color: "gold" },
+                      { step: "4", title: "Download", desc: "Get high-quality extracted frames", color: "purple" },
+                    ].map((item, index) => (
+                      <div key={item.step} className="text-center relative">
+                        <OrganicShape 
+                          variant={index % 2 === 0 ? "blob1" : "blob2"} 
+                          size="sm" 
+                          color={item.color as any} 
+                          className="top-0 right-0 opacity-20" 
+                        />
+                        <div className="w-12 h-12 bg-electric-blue text-void-black font-mono font-bold text-h3 flex items-center justify-center border-3 border-void-black mx-auto mb-3 relative z-10">
+                          {item.step}
+                        </div>
+                        <h4 className="font-mono font-bold text-body uppercase mb-2 relative z-10">{item.title}</h4>
+                        <p className="font-mono text-small text-gray-700 relative z-10">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter className="relative z-10">
+                  <div className="w-full text-center">
+                    {isAuthenticated ? (
+                      <Badge variant={user?.tier === 'PRO' ? 'success' : 'info'} size="md">
+                        {user?.tier === 'FREE' ? '3 VIDEOS/MONTH • 720P WITH WATERMARK' : '100 VIDEOS/MONTH • 1080P NO WATERMARK'}
+                      </Badge>
+                    ) : (
+                      <div className="space-y-2">
+                        <Badge variant="warning" size="md">
+                          ANONYMOUS: 1 VIDEO/DAY • 720P WITH WATERMARK
+                        </Badge>
+                        <div>
+                          <Button variant="secondary" size="sm" className="ml-2">
+                            REGISTER FOR MORE
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardFooter>
+              </Card>
+            </AnimatedBg>
+          </div>
+        )}
 
-          {appState === "completed" && results.length > 0 && (
-            <div style={{ marginTop: "2rem" }}>
-              <ResultsGallery
-                results={results}
-                sessionId={sessionId!}
-                onDownload={handleDownload}
-              />
-            </div>
-          )}
+        {appState === "configure" && (
+          <div className="space-y-8 relative">
+            <BlobDecoration size="lg" color="purple" position="top-left" className="opacity-15" />
+            
+            {/* Upload Summary */}
+            {uploadedFile && (
+              <Card variant="default" className="relative overflow-hidden">
+                <OrganicShape variant="squiggle" size="md" color="blue" className="top-0 right-0 opacity-20" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-3">
+                    📁 UPLOADED VIDEO
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-small">
+                    <div>
+                      <span className="text-gray-700 font-medium">FILE:</span>
+                      <br />
+                      <span className="text-void-black font-bold">{uploadedFile.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-700 font-medium">SIZE:</span>
+                      <br />
+                      <span className="text-void-black font-bold">
+                        {(uploadedFile.size / (1024 * 1024)).toFixed(1)} MB
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-700 font-medium">TYPE:</span>
+                      <br />
+                      <span className="text-void-black font-bold">{uploadedFile.type}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-700 font-medium">SESSION:</span>
+                      <br />
+                      <code className="text-electric-blue bg-gray-100 px-2 py-1">
+                        {sessionId?.slice(0, 8)}...
+                      </code>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-          {appState === "completed" && results.length === 0 && (
-            <article style={{ marginTop: "2rem" }}>
-              <header>⚠️ No Results</header>
-              <p>
-                No suitable frames were found in your video. This might happen
-                if:
+            {/* Processing Options */}
+            <AnimatedBg variant="particles" intensity="low">
+              <Card variant="default" className="relative overflow-hidden">
+                <BlobDecoration size="xl" color="gradient" position="bottom-right" className="opacity-10" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-3">
+                    ⚙️ PROCESSING OPTIONS
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 relative z-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative">
+                      <OrganicShape variant="blob1" size="sm" color="blue" className="top-0 right-0 opacity-15" />
+                      <FormField
+                        label="Mode"
+                        hint={processingOptions.mode === 'profile' 
+                          ? 'Best for headshots and profile pictures' 
+                          : 'Best for sports and action shots'}
+                      >
+                        <Select
+                          value={processingOptions.mode}
+                          onChange={(e) => setProcessingOptions(prev => ({ ...prev, mode: e.target.value as 'profile' | 'action' }))}
+                          options={[
+                            { value: 'profile', label: 'Profile (Face-focused)' },
+                            { value: 'action', label: 'Action (Activity-focused)' },
+                          ]}
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="relative">
+                      <OrganicShape variant="blob2" size="sm" color="green" className="top-0 left-0 opacity-15" />
+                      <FormField
+                        label="Quality"
+                        hint="Higher quality takes longer to process"
+                      >
+                        <Select
+                          value={processingOptions.quality}
+                          onChange={(e) => setProcessingOptions(prev => ({ ...prev, quality: e.target.value as 'fast' | 'balanced' | 'best' }))}
+                          options={[
+                            { value: 'fast', label: 'Fast (Quick processing)' },
+                            { value: 'balanced', label: 'Balanced (Recommended)' },
+                            { value: 'best', label: 'Best (Highest quality)' },
+                          ]}
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="relative">
+                      <OrganicShape variant="lightning" size="sm" color="gold" className="bottom-0 right-0 opacity-15" />
+                      <FormField
+                        label="Number of Frames"
+                        hint="How many best frames to extract (1-10)"
+                      >
+                        <Select
+                          value={processingOptions.count.toString()}
+                          onChange={(e) => setProcessingOptions(prev => ({ ...prev, count: parseInt(e.target.value) }))}
+                          options={Array.from({ length: 10 }, (_, i) => ({
+                            value: (i + 1).toString(),
+                            label: `${i + 1} frame${i > 0 ? 's' : ''}`,
+                          }))}
+                        />
+                      </FormField>
+                    </div>
+
+                    <div className="relative">
+                      <OrganicShape variant="blob3" size="sm" color="purple" className="bottom-0 left-0 opacity-15" />
+                      <FormField
+                        label="Sample Rate"
+                        hint="Extract every Nth frame (lower = more thorough)"
+                      >
+                        <Select
+                          value={processingOptions.sample_rate.toString()}
+                          onChange={(e) => setProcessingOptions(prev => ({ ...prev, sample_rate: parseInt(e.target.value) }))}
+                          options={[
+                            { value: '15', label: 'Every 15th frame (Thorough)' },
+                            { value: '30', label: 'Every 30th frame (Balanced)' },
+                            { value: '45', label: 'Every 45th frame (Fast)' },
+                            { value: '60', label: 'Every 60th frame (Fastest)' },
+                          ]}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+
+                  {processingOptions.count > 1 && (
+                    <div className="relative">
+                      <BlobDecoration size="md" color="blue" position="center" className="opacity-10" />
+                      <FormField
+                        label="Minimum Interval (seconds)"
+                        hint="Minimum time between selected frames"
+                        className="relative z-10"
+                      >
+                        <Select
+                          value={processingOptions.min_interval.toString()}
+                          onChange={(e) => setProcessingOptions(prev => ({ ...prev, min_interval: parseFloat(e.target.value) }))}
+                          options={[
+                            { value: '1.0', label: '1.0 seconds' },
+                            { value: '2.0', label: '2.0 seconds (Recommended)' },
+                            { value: '3.0', label: '3.0 seconds' },
+                            { value: '5.0', label: '5.0 seconds' },
+                          ]}
+                        />
+                      </FormField>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="relative z-10">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    onClick={handleProcess}
+                    disabled={isProcessing}
+                    loading={isProcessing}
+                    className="w-full"
+                  >
+                    🚀 START PROCESSING
+                  </Button>
+                </CardFooter>
+              </Card>
+            </AnimatedBg>
+          </div>
+        )}
+
+        {(appState === "processing" || appState === "completed") && (
+          <div className="space-y-8 relative">
+            <BlobDecoration size="xl" color="green" position="top-right" className="opacity-10" />
+            
+            <ProcessingStatus status={status} sessionId={sessionId} />
+
+            {appState === "completed" && results.length > 0 && (
+              <AnimatedBg variant="blobs" intensity="medium" className="rounded-lg">
+                <div className="relative">
+                  <OrganicShape variant="squiggle" size="lg" color="gold" className="top-0 left-0 opacity-20" />
+                  <ResultsGallery
+                    results={results}
+                    sessionId={sessionId!}
+                    onDownload={handleDownload}
+                    className="relative z-10"
+                  />
+                </div>
+              </AnimatedBg>
+            )}
+
+            {appState === "completed" && results.length === 0 && (
+              <Card variant="default" className="bg-warning-orange/10 border-warning-orange relative overflow-hidden">
+                <BlobDecoration size="lg" color="gold" position="center" className="opacity-30" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="text-warning-orange flex items-center gap-3">
+                    ⚠️ NO RESULTS
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10">
+                  <p className="font-mono text-body text-void-black mb-4">
+                    No suitable frames were found in your video. This might happen if:
+                  </p>
+                  <ul className="space-y-2 font-mono text-small text-void-black">
+                    <li>• The video is very short or has limited motion</li>
+                    <li>• The quality settings were too strict</li>
+                    <li>• The video doesn't match the selected mode (profile/action)</li>
+                  </ul>
+                </CardContent>
+                <CardFooter className="relative z-10">
+                  <Button onClick={handleReset} variant="secondary">
+                    🔄 TRY WITH DIFFERENT SETTINGS
+                  </Button>
+                </CardFooter>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Reset Button */}
+        {appState !== "upload" && appState !== "error" && (
+          <div className="text-center mt-8 relative">
+            <OrganicShape variant="blob1" size="md" color="purple" className="top-0 left-1/2 opacity-10" />
+            <Button onClick={handleReset} variant="ghost" size="md" className="relative z-10">
+              🔄 START OVER
+            </Button>
+          </div>
+        )}
+
+        {/* Footer with Animated Background */}
+        <AnimatedBg variant="grid" intensity="low" className="mt-16 pt-8 rounded-lg">
+          <footer className="border-t-3 border-void-black text-center relative">
+            <BlobDecoration size="lg" color="gradient" position="bottom-left" className="opacity-5" />
+            <div className="space-y-4 relative z-10 p-6">
+              <p className="font-mono text-small text-gray-700">
+                Made with ❤️ using AI • Powered by bleeding-edge technology
               </p>
-              <ul>
-                <li>The video is very short or has limited motion</li>
-                <li>The quality settings were too strict</li>
-                <li>
-                  The video doesn't match the selected mode (profile/action)
-                </li>
-              </ul>
-              <footer>
-                <button onClick={handleReset} className="outline">
-                  🔄 Try with different settings
-                </button>
-              </footer>
-            </article>
-          )}
-        </section>
-      )}
-
-      {/* Reset Button */}
-      {appState !== "upload" && appState !== "error" && (
-        <div style={{ marginTop: "2rem", textAlign: "center" }}>
-          <button onClick={handleReset} className="secondary outline">
-            🔄 Start Over
-          </button>
-        </div>
-      )}
-
-      {/* Footer */}
-      <footer
-        style={{
-          marginTop: "3rem",
-          textAlign: "center",
-          fontSize: "0.9rem",
-          opacity: 0.7,
-          borderTop: "1px solid #eee",
-          paddingTop: "2rem",
-        }}
-      >
-        <p>
-          Made with ❤️ using AI •
-          <a
-            href="http://localhost:8000/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ marginLeft: "0.5rem" }}
-          >
-            API Docs
-          </a>{" "}
-          •
-          <a
-            href="http://localhost:8000"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ marginLeft: "0.5rem" }}
-          >
-            API Status
-          </a>
-        </p>
-      </footer>
-    </main>
+              <div className="flex justify-center gap-4">
+                <a
+                  href="http://localhost:8000/docs"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-caption text-electric-blue hover:text-energy-green transition-colors"
+                >
+                  API DOCS
+                </a>
+                <span className="text-gray-700">•</span>
+                <a
+                  href="http://localhost:8000"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-caption text-electric-blue hover:text-energy-green transition-colors"
+                >
+                  API STATUS
+                </a>
+                <span className="text-gray-700">•</span>
+                <a
+                  href="#"
+                  className="font-mono text-caption text-electric-blue hover:text-energy-green transition-colors"
+                >
+                  DISCORD
+                </a>
+              </div>
+            </div>
+          </footer>
+        </AnimatedBg>
+      </main>
+    </AnimatedBg>
   );
 }

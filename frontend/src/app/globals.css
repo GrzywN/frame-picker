@@ -1,6 +1,167 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  /* Primary Colors */
+  --color-electric-blue: #00E5FF;
+  --color-electric-blue-dark: #0091EA;
+  --color-void-black: #0A0A0A;
+  --color-pure-white: #FFFFFF;
+  
+  /* Accent Colors */
+  --color-saiyan-gold: #FFD700;
+  --color-energy-green: #39FF14;
+  --color-warning-orange: #FF6B35;
+  --color-deep-purple: #4A148C;
+  
+  /* Neutral Grays */
+  --color-gray-100: #F8F8F8;
+  --color-gray-200: #E8E8E8;
+  --color-gray-700: #404040;
+  --color-gray-900: #1A1A1A;
+
+  /* Font Families */
+  --font-family-mono: "JetBrains Mono", "SF Mono", "Monaco", "Inconsolata", monospace;
+
+  /* Font Sizes */
+  --font-size-h1: 48px;
+  --font-size-h2: 36px;
+  --font-size-h3: 24px;
+  --font-size-body: 16px;
+  --font-size-small: 14px;
+  --font-size-caption: 12px;
+
+  /* Line Heights */
+  --line-height-h1: 1.1;
+  --line-height-h2: 1.2;
+  --line-height-h3: 1.3;
+  --line-height-body: 1.5;
+  --line-height-small: 1.4;
+  --line-height-caption: 1.3;
+
+  /* Font Weights */
+  --font-weight-h1: 800;
+  --font-weight-h2: 700;
+  --font-weight-h3: 600;
+  --font-weight-body: 400;
+  --font-weight-small: 400;
+  --font-weight-caption: 500;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* Box Shadows */
+  --shadow-neo-sm: 2px 2px 0px #000;
+  --shadow-neo: 4px 4px 0px #000;
+  --shadow-neo-md: 6px 6px 0px #000;
+  --shadow-neo-lg: 8px 8px 0px #000;
+  --shadow-neo-xl: 12px 12px 0px #000;
+  --shadow-neo-blue: 4px 4px 0px #00E5FF;
+  --shadow-neo-green: 8px 8px 0px #39FF14;
+  --shadow-neo-gray: 8px 8px 0px #404040;
+
+  /* Backdrop Blur */
+  --backdrop-blur-neo: 8px;
+
+  /* Animations */
+  --animate-spin: spin 1s linear infinite;
+  --animate-pulse-slow: pulse 2s infinite;
+  --animate-progress-fill: progress-fill 0.3s ease-out;
+  --animate-blob: blob 7s infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-wave: wave 8s ease-in-out infinite;
+
+  /* Animation Delays */
+  --animate-delay-0: 0ms;
+  --animate-delay-2000: 2000ms;
+  --animate-delay-4000: 4000ms;
+  --animate-delay-6000: 6000ms;
+
+  /* Timing Functions */
+  --timing-neo: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Typography Classes */
+@utility h1 {
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-h1);
+  font-weight: var(--font-weight-h1);
+}
+
+@utility h2 {
+  font-size: var(--font-size-h2);
+  line-height: var(--line-height-h2);
+  font-weight: var(--font-weight-h2);
+}
+
+@utility h3 {
+  font-size: var(--font-size-h3);
+  line-height: var(--line-height-h3);
+  font-weight: var(--font-weight-h3);
+}
+
+@utility body {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  font-weight: var(--font-weight-body);
+}
+
+@utility small {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+  font-weight: var(--font-weight-small);
+}
+
+@utility caption {
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  font-weight: var(--font-weight-caption);
+}
+
+/* Animation Keyframes */
+@keyframes progress-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(-25%);
+  }
 }

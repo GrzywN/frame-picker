@@ -1,10 +1,11 @@
-/**
- * Usage statistics display component
- */
 'use client'
 
 import { useUsageStats } from '@/shared/hooks/use-usage-stats'
 import { useAuth } from '@/shared/hooks/use-auth'
+import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui/molecules/card'
+import { Badge } from '@/shared/ui/atoms/badge'
+import { Progress } from '@/shared/ui/atoms/progress'
+import { Button } from '@/shared/ui/atoms/button'
 
 export function UsageStats() {
   const { user } = useAuth()
@@ -12,38 +13,48 @@ export function UsageStats() {
 
   if (!user) {
     return (
-      <div style={{ 
-        padding: '1rem',
-        backgroundColor: '#fff3cd',
-        border: '1px solid #ffeaa7',
-        borderRadius: '4px',
-        fontSize: '0.9rem'
-      }}>
-        <strong>🔓 Anonymous Usage:</strong> 1 video per day
-      </div>
+      <Card variant="default" className="bg-warning-orange/10 border-warning-orange">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔓</span>
+            <div>
+              <span className="font-mono font-bold text-void-black uppercase">
+                ANONYMOUS USAGE
+              </span>
+              <p className="font-mono text-small text-void-black">
+                1 video per day • 720p with watermark
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
   if (loading) {
     return (
-      <div style={{ padding: '1rem', textAlign: 'center' }}>
-        <progress />
-        <p>Loading usage stats...</p>
-      </div>
+      <Card variant="processing">
+        <CardContent className="p-4 text-center">
+          <div className="w-6 h-6 border-2 border-energy-green border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+          <p className="font-mono text-small">LOADING STATS...</p>
+        </CardContent>
+      </Card>
     )
   }
 
   if (error) {
     return (
-      <div style={{ 
-        padding: '1rem',
-        backgroundColor: '#f8d7da',
-        border: '1px solid #f5c6cb',
-        borderRadius: '4px',
-        color: '#721c24'
-      }}>
-        <strong>Error:</strong> {error}
-      </div>
+      <Card variant="default" className="bg-warning-orange/10 border-warning-orange">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">⚠️</span>
+            <div>
+              <span className="font-mono font-bold text-void-black">ERROR</span>
+              <p className="font-mono text-small text-void-black">{error}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -51,89 +62,71 @@ export function UsageStats() {
     return null
   }
 
-  const getUsageColor = () => {
+  const getUsageVariant = (): 'success' | 'warning' | 'error' => {
     const percentage = (stats.current_usage / stats.limit) * 100
-    if (percentage >= 90) return '#dc3545'
-    if (percentage >= 70) return '#ffc107'
-    return '#28a745'
+    if (percentage >= 90) return 'error'
+    if (percentage >= 70) return 'warning'
+    return 'success'
   }
 
-  const tierInfo = user.tier === 'FREE' 
-    ? { name: 'Free', color: '#6c757d', period: 'month' }
-    : { name: 'Pro', color: '#007bff', period: 'month' }
+  const tierInfo = {
+    FREE: { name: 'Free', color: 'info' as const, period: 'month' },
+    PRO: { name: 'Pro', color: 'success' as const, period: 'month' },
+  }
+
+  const currentTier = tierInfo[user.tier as keyof typeof tierInfo]
 
   return (
-    <div style={{ 
-      padding: '1rem',
-      backgroundColor: '#f8f9fa',
-      border: '1px solid #dee2e6',
-      borderRadius: '4px'
-    }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '0.5rem'
-      }}>
-        <strong>📊 Usage Statistics</strong>
-        <span style={{ 
-          backgroundColor: tierInfo.color,
-          color: 'white',
-          padding: '0.2rem 0.5rem',
-          borderRadius: '12px',
-          fontSize: '0.8rem',
-          fontWeight: 'bold'
-        }}>
-          {tierInfo.name}
-        </span>
-      </div>
-
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between',
-        fontSize: '0.9rem',
-        marginBottom: '0.5rem'
-      }}>
-        <span>This {tierInfo.period}:</span>
-        <span style={{ color: getUsageColor(), fontWeight: 'bold' }}>
-          {stats.current_usage} / {stats.limit}
-        </span>
-      </div>
-
-      <div style={{ 
-        width: '100%',
-        height: '8px',
-        backgroundColor: '#e9ecef',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        marginBottom: '0.5rem'
-      }}>
-        <div style={{
-          width: `${Math.min((stats.current_usage / stats.limit) * 100, 100)}%`,
-          height: '100%',
-          backgroundColor: getUsageColor(),
-          transition: 'width 0.3s ease'
-        }} />
-      </div>
-
-      <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
-        {stats.remaining > 0 ? (
-          <span>✅ {stats.remaining} videos remaining</span>
-        ) : (
-          <span>⚠️ Monthly limit reached</span>
-        )}
-      </div>
-
-      {user.tier === 'FREE' && (
-        <div style={{ 
-          marginTop: '0.5rem',
-          fontSize: '0.8rem'
-        }}>
-          <a href="#upgrade" style={{ color: '#007bff' }}>
-            ⬆️ Upgrade to Pro for 100 videos/month
-          </a>
+    <Card variant="default" hover className="bg-gray-100 border-electric-blue">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-3">
+            📊 USAGE STATISTICS
+          </CardTitle>
+          <Badge variant={currentTier.color} size="md">
+            {currentTier.name.toUpperCase()}
+          </Badge>
         </div>
-      )}
-    </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="font-mono text-small font-medium text-gray-700">
+            THIS {currentTier.period.toUpperCase()}:
+          </span>
+          <span className="font-mono text-body font-bold text-void-black">
+            {stats.current_usage} / {stats.limit}
+          </span>
+        </div>
+
+        <Progress 
+          value={(stats.current_usage / stats.limit) * 100} 
+          size="md"
+        />
+
+        <div className="text-center">
+          {stats.remaining > 0 ? (
+            <span className="font-mono text-small text-energy-green font-bold">
+              ✅ {stats.remaining} VIDEOS REMAINING
+            </span>
+          ) : (
+            <span className="font-mono text-small text-warning-orange font-bold">
+              ⚠️ MONTHLY LIMIT REACHED
+            </span>
+          )}
+        </div>
+
+        {user.tier === 'FREE' && (
+          <div className="pt-3 border-t-2 border-gray-200 text-center">
+            <Button variant="secondary" size="sm">
+              ⬆️ UPGRADE TO PRO
+            </Button>
+            <p className="font-mono text-caption text-gray-700 mt-2">
+              100 videos/month • HD quality • No watermarks
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

@@ -1,11 +1,13 @@
-/**
- * Login form component
- */
 'use client'
 
 import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/molecules/card'
+import { FormField } from '@/shared/ui/molecules/form-field'
+import { Button } from '@/shared/ui/atoms/button'
+import { AnimatedBg } from '@/shared/ui/atoms/animated-bg'
+import { BlobDecoration, OrganicShape } from '@/shared/ui/atoms/blob-decoration'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -33,7 +35,6 @@ export function LoginForm() {
       if (result?.error) {
         setError('Invalid email or password')
       } else if (result?.ok) {
-        // Verify session was created
         const session = await getSession()
         console.log('Session after login:', session)
         
@@ -54,70 +55,95 @@ export function LoginForm() {
   }
 
   return (
-    <div className="login-form">
-      <h1>🎬 Login to Frame Picker</h1>
+    <AnimatedBg variant="blobs" intensity="medium" className="min-h-screen flex items-center justify-center p-4">
+      {/* Floating decorative elements */}
+      <OrganicShape variant="squiggle" size="lg" color="blue" className="top-20 left-10 opacity-20 animate-float" />
+      <OrganicShape variant="lightning" size="md" color="green" className="bottom-20 right-10 opacity-15 animate-float" />
+      <BlobDecoration size="xl" color="gradient" position="top-right" className="opacity-10" />
       
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-            placeholder="your@email.com"
-          />
-        </div>
+      <div className="w-full max-w-prose relative z-10">
+        <Card variant="default" className="shadow-neo-xl relative overflow-hidden">
+          <BlobDecoration size="lg" color="blue" position="top-left" className="opacity-20" />
+          <BlobDecoration size="md" color="green" position="bottom-right" className="opacity-15" />
+          
+          <CardHeader className="text-center relative z-10">
+            <div className="text-6xl mb-4">🎬</div>
+            <CardTitle className="text-electric-blue">
+              LOGIN TO FRAME PICKER
+            </CardTitle>
+            <OrganicShape variant="blob1" size="sm" color="purple" className="top-0 right-0 opacity-20" />
+          </CardHeader>
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-6 relative z-10">
+              <div className="relative">
+                <OrganicShape variant="blob2" size="sm" color="blue" className="top-0 right-0 opacity-10" />
+                <FormField
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  placeholder="your@email.com"
+                  className="relative z-10"
+                />
+              </div>
 
-        <div>
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
-            placeholder="Your password"
-          />
-        </div>
+              <div className="relative">
+                <OrganicShape variant="lightning" size="sm" color="green" className="bottom-0 left-0 opacity-10" />
+                <FormField
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  placeholder="Your password"
+                  className="relative z-10"
+                />
+              </div>
 
-        {error && (
-          <div style={{ 
-            color: '#dc3545', 
-            marginBottom: '1rem',
-            padding: '0.5rem',
-            backgroundColor: '#f8d7da',
-            border: '1px solid #f5c6cb',
-            borderRadius: '4px'
-          }}>
-            {error}
-          </div>
-        )}
+              {error && (
+                <Card variant="default" className="bg-warning-orange/10 border-warning-orange relative overflow-hidden">
+                  <BlobDecoration size="sm" color="gold" position="center" className="opacity-30" />
+                  <CardContent className="p-4 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">⚠️</span>
+                      <span className="font-mono text-small text-void-black">{error}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </CardContent>
 
-        <button 
-          type="submit" 
-          disabled={loading}
-          style={{
-            width: '100%',
-            opacity: loading ? 0.6 : 1,
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? '🔄 Signing in...' : '🚀 Sign In'}
-        </button>
-      </form>
+            <CardFooter className="flex-col space-y-4 relative z-10">
+              <Button 
+                type="submit" 
+                variant="primary"
+                size="lg"
+                disabled={loading}
+                loading={loading}
+                className="w-full"
+              >
+                🚀 SIGN IN
+              </Button>
 
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-        <small>
-          Don't have an account?{' '}
-          <a href="/auth/register" style={{ color: '#007bff' }}>
-            Create one here
-          </a>
-        </small>
+              <div className="text-center">
+                <span className="font-mono text-small text-gray-700">
+                  Don't have an account?{' '}
+                </span>
+                <a 
+                  href="/auth/register" 
+                  className="font-mono text-small text-electric-blue hover:text-energy-green font-bold transition-colors"
+                >
+                  CREATE ONE HERE
+                </a>
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
-    </div>
+    </AnimatedBg>
   )
 }

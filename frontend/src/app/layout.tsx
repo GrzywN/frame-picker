@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import '@picocss/pico/css/pico.min.css';
 import { AuthProvider } from '@/shared/components/auth-provider';
+
+import './globals.css';
 
 export const metadata: Metadata = {
   title: "Frame Picker - AI Video Frame Selection",
