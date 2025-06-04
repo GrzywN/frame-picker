@@ -1,13 +1,13 @@
-"""
-Session management endpoints
-"""
+"""Session management endpoints"""
 
 import uuid
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..dependencies import get_session_service
+from ..dependencies import get_current_user_optional, get_session_service
 from ..models import SessionCreate, SessionResponse
+from ..models.auth import CurrentUser
 from ..services.session_service import SessionService
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -15,12 +15,15 @@ router = APIRouter(prefix="/sessions", tags=["sessions"])
 
 @router.post("", response_model=SessionResponse)
 async def create_session(
+    current_user: Optional[CurrentUser] = Depends(get_current_user_optional),
     session_service: SessionService = Depends(get_session_service),
 ):
     """Create a new session for video processing"""
     try:
         session_id = str(uuid.uuid4())
-        session = await session_service.create_session(session_id)
+        user_id = current_user.id if current_user else None
+
+        session = await session_service.create_session(session_id, user_id)
 
         return SessionResponse(
             session_id=session_id,

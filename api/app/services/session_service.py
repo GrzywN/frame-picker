@@ -1,6 +1,4 @@
-"""
-Session management service using PostgreSQL
-"""
+"""Session management service using PostgreSQL"""
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
@@ -26,21 +24,27 @@ class SessionService:
     def _to_utc(self, dt: datetime) -> datetime:
         """Convert datetime to UTC with timezone info"""
         if dt.tzinfo is None:
-            # If naive datetime, assume it's UTC
             return dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(timezone.utc)
 
-    async def create_session(self, session_id: str) -> Dict[str, Any]:
-        """Create a new session"""
+    async def create_session(
+        self, session_id: str, user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Create a new session with optional user association"""
         now = self._now_utc()
         expires_at = now + timedelta(hours=settings.SESSION_EXPIRE_HOURS)
 
         session = self.session_repo.create_session(session_id, expires_at)
 
+        # Associate with user if provided
+        if user_id:
+            session = self.session_repo.update(session, user_id=user_id)
+
         return {
             "session_id": session.session_id,
             "status": session.status,
             "message": session.message,
+            "user_id": str(session.user_id) if session.user_id else None,
             "created_at": self._to_utc(session.created_at).isoformat(),
             "expires_at": (
                 self._to_utc(session.expires_at).isoformat()
@@ -68,6 +72,7 @@ class SessionService:
             "message": session.message,
             "progress": session.progress,
             "error": session.error,
+            "user_id": str(session.user_id) if session.user_id else None,
             "created_at": self._to_utc(session.created_at).isoformat(),
             "expires_at": (
                 self._to_utc(session.expires_at).isoformat()
@@ -98,4 +103,13 @@ class SessionService:
 
         # Cleanup will cascade to related records (video files, processing jobs, frame results)
         self.session_repo.delete(session)
+        return True
+
+    async def associate_user_with_session(self, session_id: str, user_id: str) -> bool:
+        """Associate existing session with a user"""
+        session = self.session_repo.get_by_session_id(session_id)
+        if not session:
+            return False
+
+        self.session_repo.update(session, user_id=user_id)
         return True

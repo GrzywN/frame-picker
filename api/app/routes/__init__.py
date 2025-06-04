@@ -1,9 +1,8 @@
-"""
-API routes package
-"""
+"""API routes package"""
 
 from fastapi import APIRouter
 
+from .auth import router as auth_router
 from .download import router as download_router
 from .processing import router as processing_router
 from .sessions import router as sessions_router
@@ -14,6 +13,7 @@ def create_api_router() -> APIRouter:
     """Create main API router with all sub-routes"""
     api_router = APIRouter(prefix="/api")
 
+    api_router.include_router(auth_router)
     api_router.include_router(sessions_router)
     api_router.include_router(upload_router)
     api_router.include_router(processing_router)

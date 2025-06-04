@@ -1,10 +1,11 @@
 """Authentication models"""
 
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from ..enums.tier import Tier
+from ..enums import Tier
 
 
 class UserCreate(BaseModel):
@@ -28,7 +29,7 @@ class UserResponse(BaseModel):
     email: str
     tier: Tier
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
 
 class TokenResponse(BaseModel):
@@ -46,3 +47,4 @@ class CurrentUser(BaseModel):
     email: str
     tier: Tier
     is_active: bool
+    created_at: Optional[datetime] = None
