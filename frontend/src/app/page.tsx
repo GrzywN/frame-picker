@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/shared/hooks/use-auth";
+import { UsageStats } from "@/features/auth/components/usage-stats";
 import {
   apiClient,
   ProcessRequest,
@@ -15,6 +17,7 @@ import { ResultsGallery } from "@/features/results/results-gallery";
 type AppState = "upload" | "configure" | "processing" | "completed" | "error";
 
 export default function HomePage() {
+  const { user, accessToken, isAuthenticated } = useAuth();
   const [appState, setAppState] = useState<AppState>("upload");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [status, setStatus] = useState<SessionStatus | null>(null);
@@ -23,6 +26,11 @@ export default function HomePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  // Enhanced API client with auth
+  const getAuthHeaders = () => {
+    return accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {};
+  };
 
   // Polling for status updates
   useEffect(() => {
@@ -37,7 +45,6 @@ export default function HomePage() {
           setAppState("completed");
           setIsProcessing(false);
 
-          // Fetch results
           try {
             const resultsData = await apiClient.getResults(sessionId);
             setResults(resultsData);
@@ -58,8 +65,8 @@ export default function HomePage() {
       }
     };
 
-    const interval = setInterval(pollStatus, 2000); // Poll every 2 seconds
-    pollStatus(); // Initial poll
+    const interval = setInterval(pollStatus, 2000);
+    pollStatus();
 
     return () => clearInterval(interval);
   }, [sessionId, appState]);
@@ -70,9 +77,16 @@ export default function HomePage() {
       setError(null);
       setUploadedFile(file);
 
-      // Create session
+      // Create session with auth headers
       console.log("Creating session...");
-      const session = await apiClient.createSession();
+      const session = await fetch(`http://localhost:8000/api/sessions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+      }).then(res => res.json());
+      
       setSessionId(session.session_id);
       console.log("Session created:", session.session_id);
 
@@ -102,7 +116,21 @@ export default function HomePage() {
       setError(null);
 
       console.log("Starting processing with options:", options);
-      await apiClient.processVideo(sessionId, options);
+      
+      const response = await fetch(`http://localhost:8000/api/sessions/${sessionId}/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(options),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Processing failed");
+      }
+
       console.log("Processing started");
       setAppState("processing");
     } catch (err) {
@@ -142,7 +170,6 @@ export default function HomePage() {
     } catch (err) {
       console.error("Cleanup error:", err);
     } finally {
-      // Reset all state
       setAppState("upload");
       setSessionId(null);
       setStatus(null);
@@ -157,7 +184,7 @@ export default function HomePage() {
   const getStepOpacity = (step: AppState): number => {
     const steps: AppState[] = [
       "upload",
-      "configure",
+      "configure", 
       "processing",
       "completed",
     ];
@@ -165,7 +192,7 @@ export default function HomePage() {
     const stepIndex = steps.indexOf(step);
 
     if (appState === "error") {
-      return stepIndex <= 0 ? 1 : 0.3; // Only show upload step clearly on error
+      return stepIndex <= 0 ? 1 : 0.3;
     }
 
     return stepIndex <= currentIndex ? 1 : 0.4;
@@ -182,10 +209,30 @@ export default function HomePage() {
         </ul>
         <ul>
           <li>
-            <small>AI-powered video frame selection</small>
+            {isAuthenticated ? (
+              <a href="/dashboard" style={{ marginRight: '1rem' }}>
+                👤 Dashboard
+              </a>
+            ) : (
+              <>
+                <a href="/auth/login" style={{ marginRight: '1rem' }}>
+                  🔑 Login
+                </a>
+                <a href="/auth/register">
+                  🆕 Register
+                </a>
+              </>
+            )}
           </li>
         </ul>
       </nav>
+
+      {/* Usage Stats for Authenticated Users */}
+      {isAuthenticated && (
+        <div style={{ marginBottom: '2rem' }}>
+          <UsageStats />
+        </div>
+      )}
 
       {/* Error Display */}
       {error && (
@@ -287,14 +334,26 @@ export default function HomePage() {
             </ol>
             <footer>
               <small>
-                <strong>Free tier:</strong> Up to 3 frames, 720p quality with
-                watermark. Max file size: 100MB.
+                {isAuthenticated ? (
+                  <span>
+                    <strong>Authenticated:</strong> {user?.tier === 'FREE' ? '3 videos/month' : '100 videos/month'}, 
+                    {user?.tier === 'FREE' ? ' 720p with watermark' : ' 1080p no watermark'}
+                  </span>
+                ) : (
+                  <span>
+                    <strong>Anonymous:</strong> 1 video/day, 720p with watermark. 
+                    <a href="/auth/register" style={{ marginLeft: '0.5rem' }}>
+                      Register for more!
+                    </a>
+                  </span>
+                )}
               </small>
             </footer>
           </article>
         </section>
       )}
 
+      {/* Rest of the component remains the same... */}
       {appState === "configure" && (
         <section>
           {/* Upload Summary */}
@@ -381,35 +440,6 @@ export default function HomePage() {
             🔄 Start Over
           </button>
         </div>
-      )}
-
-      {/* Debug Info (only in development) */}
-      {process.env.NODE_ENV === "development" && (
-        <details style={{ marginTop: "2rem", fontSize: "0.8rem" }}>
-          <summary>🔧 Debug Info</summary>
-          <pre
-            style={{
-              backgroundColor: "#f5f5f5",
-              padding: "1rem",
-              borderRadius: "4px",
-            }}
-          >
-            {JSON.stringify(
-              {
-                appState,
-                sessionId,
-                hasStatus: !!status,
-                resultsCount: results.length,
-                error,
-                isUploading,
-                isProcessing,
-                uploadedFileName: uploadedFile?.name,
-              },
-              null,
-              2
-            )}
-          </pre>
-        </details>
       )}
 
       {/* Footer */}

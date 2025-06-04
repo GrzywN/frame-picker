@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import '@picocss/pico/css/pico.min.css';
+import { AuthProvider } from '@/shared/components/auth-provider';
 
 export const metadata: Metadata = {
   title: "Frame Picker - AI Video Frame Selection",
@@ -17,7 +18,9 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
