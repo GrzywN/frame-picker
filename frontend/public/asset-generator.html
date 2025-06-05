@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frame Picker Brand Graphics Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0A0A0A;
+            color: #FFFFFF;
+            overflow-x: auto;
+        }
+        
+        .container {
+            padding: 20px;
+            max-width: none;
+        }
+        
+        h1 {
+            color: #00E5FF;
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .graphics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+        
+        .graphic-container {
+            border: 3px solid #00E5FF;
+            background: #1A1A1A;
+            padding: 20px;
+        }
+        
+        .graphic-title {
+            color: #39FF14;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        
+        .graphic-specs {
+            color: #FFD700;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+        
+        /* OG Image Styles */
+        .og-image {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%);
+            border: 4px solid #00E5FF;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top left;
+            margin-bottom: 20px;
+        }
+        
+        .og-background {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 229, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(57, 255, 20, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+        }
+        
+        .og-content {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 60px;
+        }
+        
+        .og-left {
+            flex: 1;
+        }
+        
+        .og-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 30px;
+        }
+        
+        .og-title {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        
+        .og-subtitle {
+            font-size: 28px;
+            color: #00E5FF;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .og-description {
+            font-size: 20px;
+            color: #CCCCCC;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        
+        .og-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 40px;
+        }
+        
+        .og-icon {
+            font-size: 120px;
+            margin-bottom: 20px;
+        }
+        
+        .og-badge {
+            background: #39FF14;
+            color: #0A0A0A;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 3px solid #0A0A0A;
+        }
+        
+        /* Twitter Card Styles */
+        .twitter-card {
+            width: 1200px;
+            height: 600px;
+            background: linear-gradient(90deg, #0A0A0A 0%, #2A2A2A 50%, #0A0A0A 100%);
+            border: 4px solid #00E5FF;
+            position: relative;
+            overflow: hidden;
+            transform: scale(0.5);
+            transform-origin: top left;
+            margin-bottom: 20px;
+        }
+        
+        .twitter-background {
+            position: absolute;
+            inset: 0;
+            background: 
+                linear-gradient(45deg, transparent 30%, rgba(0, 229, 255, 0.05) 50%, transparent 70%),
+                radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 60%);
+        }
+        
+        .twitter-content {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 50px;
+        }
+        
+        .twitter-left {
+            flex: 1;
+        }
+        
+        .twitter-logo {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 25px;
+        }
+        
+        .twitter-title {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1.1;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+        
+        .twitter-subtitle {
+            font-size: 22px;
+            color: #00E5FF;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .twitter-description {
+            font-size: 18px;
+            color: #CCCCCC;
+            line-height: 1.4;
+            max-width: 500px;
+        }
+        
+        .twitter-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-left: 40px;
+        }
+        
+        .twitter-visual {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(57, 255, 20, 0.2));
+            border: 4px solid #00E5FF;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .twitter-icon {
+            font-size: 100px;
+        }
+        
+        .twitter-badge {
+            background: #FFD700;
+            color: #0A0A0A;
+            padding: 8px 16px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 3px solid #0A0A0A;
+        }
+        
+        /* Logo SVG */
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .download-controls {
+            margin-top: 20px;
+        }
+        
+        .download-btn {
+            background: #00E5FF;
+            color: #0A0A0A;
+            border: 3px solid #0A0A0A;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn:hover {
+            background: #39FF14;
+        }
+        
+        @media (max-width: 768px) {
+            .og-image, .twitter-card {
+                transform: scale(0.3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Frame Picker Brand Graphics Generator</h1>
+        
+        <div class="graphics-grid">
+            <!-- OG Image -->
+            <div class="graphic-container">
+                <div class="graphic-title">OpenGraph Image</div>
+                <div class="graphic-specs">1200x630px • Social Media Preview</div>
+                
+                <div class="og-image" id="og-image">
+                    <div class="og-background"></div>
+                    <div class="og-content">
+                        <div class="og-left">
+                            <div class="og-logo">
+                                <svg class="logo-svg" viewBox="0 0 100 100" fill="none">
+                                    <rect x="10" y="10" width="80" height="80" rx="8" stroke="#00E5FF" stroke-width="4" fill="none"/>
+                                    <rect x="20" y="20" width="60" height="60" rx="4" fill="url(#logoGradient)" stroke="#000" stroke-width="2"/>
+                                    <circle cx="50" cy="50" r="15" stroke="#39FF14" stroke-width="3" fill="none" stroke-dasharray="8 4"/>
+                                    <circle cx="50" cy="50" r="3" fill="#FFD700"/>
+                                    <path d="M25 30 L25 25 L30 25" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M70 25 L75 25 L75 30" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M75 70 L75 75 L70 75" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M30 75 L25 75 L25 70" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <defs>
+                                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.2"/>
+                                            <stop offset="50%" stop-color="#39FF14" stop-opacity="0.1"/>
+                                            <stop offset="100%" stop-color="#FFD700" stop-opacity="0.2"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <div class="og-title">AI-POWERED<br>FRAME EXTRACTION</div>
+                            <div class="og-subtitle">FRAME PICKER</div>
+                            <div class="og-description">Extract perfect frames from your videos using AI. Perfect for profile pictures, thumbnails, and social media content.</div>
+                        </div>
+                        <div class="og-right">
+                            <div class="og-icon">🎬</div>
+                            <div class="og-badge">FREE TO TRY</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="download-controls">
+                    <button class="download-btn" onclick="downloadOGImage()">DOWNLOAD OG IMAGE</button>
+                    <button class="download-btn" onclick="copyOGImage()">COPY TO CLIPBOARD</button>
+                </div>
+            </div>
+            
+            <!-- Twitter Card -->
+            <div class="graphic-container">
+                <div class="graphic-title">Twitter Card</div>
+                <div class="graphic-specs">1200x600px • Twitter Preview</div>
+                
+                <div class="twitter-card" id="twitter-card">
+                    <div class="twitter-background"></div>
+                    <div class="twitter-content">
+                        <div class="twitter-left">
+                            <div class="twitter-logo">
+                                <svg class="logo-svg" viewBox="0 0 100 100" fill="none">
+                                    <rect x="10" y="10" width="80" height="80" rx="8" stroke="#00E5FF" stroke-width="4" fill="none"/>
+                                    <rect x="20" y="20" width="60" height="60" rx="4" fill="url(#logoGradient2)" stroke="#000" stroke-width="2"/>
+                                    <circle cx="50" cy="50" r="15" stroke="#39FF14" stroke-width="3" fill="none" stroke-dasharray="8 4"/>
+                                    <circle cx="50" cy="50" r="3" fill="#FFD700"/>
+                                    <path d="M25 30 L25 25 L30 25" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M70 25 L75 25 L75 30" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M75 70 L75 75 L70 75" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M30 75 L25 75 L25 70" stroke="#00E5FF" stroke-width="2" stroke-linecap="round"/>
+                                    <defs>
+                                        <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.2"/>
+                                            <stop offset="50%" stop-color="#39FF14" stop-opacity="0.1"/>
+                                            <stop offset="100%" stop-color="#FFD700" stop-opacity="0.2"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <div class="twitter-title">STOP MANUAL<br>SCREENSHOTS</div>
+                            <div class="twitter-subtitle">FRAME PICKER</div>
+                            <div class="twitter-description">AI extracts perfect frames from your videos in 3 seconds. Free to try.</div>
+                        </div>
+                        <div class="twitter-right">
+                            <div class="twitter-visual">
+                                <div class="twitter-icon">🎯</div>
+                            </div>
+                            <div class="twitter-badge">AI POWERED</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="download-controls">
+                    <button class="download-btn" onclick="downloadTwitterCard()">DOWNLOAD TWITTER CARD</button>
+                    <button class="download-btn" onclick="copyTwitterCard()">COPY TO CLIPBOARD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function downloadOGImage() {
+            const element = document.getElementById('og-image');
+            html2canvas(element, {
+                width: 1200,
+                height: 630,
+                scale: 2,
+                backgroundColor: null
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'frame-picker-og-image.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+        
+        function downloadTwitterCard() {
+            const element = document.getElementById('twitter-card');
+            html2canvas(element, {
+                width: 1200,
+                height: 600,
+                scale: 2,
+                backgroundColor: null
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'frame-picker-twitter-card.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+        
+        function copyOGImage() {
+            const element = document.getElementById('og-image');
+            html2canvas(element, {
+                width: 1200,
+                height: 630,
+                scale: 2,
+                backgroundColor: null
+            }).then(canvas => {
+                canvas.toBlob(blob => {
+                    navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                });
+            });
+        }
+        
+        function copyTwitterCard() {
+            const element = document.getElementById('twitter-card');
+            html2canvas(element, {
+                width: 1200,
+                height: 600,
+                scale: 2,
+                backgroundColor: null
+            }).then(canvas => {
+                canvas.toBlob(blob => {
+                    navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                });
+            });
+        }
+    </script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
