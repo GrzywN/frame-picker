@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '../atoms/button'
 import { Badge } from '../atoms/badge'
+import { Logo } from '../atoms/logo'
 
 export interface NavbarProps {
   user?: {
@@ -30,10 +31,7 @@ const Navbar = ({ user, onSignOut, className }: NavbarProps) => {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="text-3xl">🎬</div>
-          <div className="font-mono text-h3 font-bold text-electric-blue uppercase tracking-wider group-hover:text-energy-green transition-colors">
-            FRAME PICKER
-          </div>
+          <Logo />
         </Link>
 
         {/* Desktop Navigation */}
