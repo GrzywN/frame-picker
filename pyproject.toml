@@ -42,6 +42,7 @@ build-backend = "poetry.core.masonry.api"
 pytest = "8.3.5"
 black = "25.1.0"
 isort = "6.0.1"
+pytest-asyncio = "^1.0.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -56,4 +57,5 @@ addopts = [
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
+    "asyncio: Mark tests that use asyncio",
 ]
