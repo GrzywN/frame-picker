@@ -6,8 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..dependencies import get_current_user_optional, get_session_service
-from ..models import SessionCreate, SessionResponse
-from ..models.auth import CurrentUser
+from ..models import CurrentUser, SessionCreate, SessionResponse
 from ..services.session_service import SessionService
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])

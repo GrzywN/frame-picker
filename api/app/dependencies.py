@@ -7,7 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from .database.connection import get_db
-from .models.auth import CurrentUser
+from .models import CurrentUser
 from .repositories.user_repository import UserRepository
 from .services.processing_service import ProcessingService
 from .services.session_service import SessionService

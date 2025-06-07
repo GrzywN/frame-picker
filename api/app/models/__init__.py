@@ -2,25 +2,54 @@
 Pydantic models for Frame Picker API
 """
 
-from ..enums import ModeEnum, QualityEnum, StatusEnum
+# Re-export enums for backward compatibility
+from ..enums import ModeEnum, QualityEnum, StatusEnum, TierEnum
+
+# Base models
 from .base import BaseResponse, ErrorResponse, HealthCheck
-from .processing import FrameResult, ProcessRequest, ProcessResponse
-from .session import SessionCreate, SessionResponse, SessionStatus
-from .video import VideoInfo, VideoUploadResponse
+
+# Schemas
+from .schemas import CurrentUser  # Auth; Processing; Session; Video
+from .schemas import (
+    FrameResult,
+    ProcessRequest,
+    ProcessResponse,
+    SessionCreate,
+    SessionResponse,
+    SessionStatus,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    VideoInfo,
+    VideoUploadResponse,
+)
 
 __all__ = [
+    # Base models
     "BaseResponse",
     "ErrorResponse",
     "HealthCheck",
-    "ModeEnum",
-    "QualityEnum",
-    "StatusEnum",
+    # Auth models
+    "CurrentUser",
+    "TokenResponse",
+    "UserCreate",
+    "UserLogin",
+    "UserResponse",
+    # Processing models
+    "FrameResult",
+    "ProcessRequest",
+    "ProcessResponse",
+    # Session models
     "SessionCreate",
     "SessionResponse",
     "SessionStatus",
+    # Video models
     "VideoInfo",
     "VideoUploadResponse",
-    "ProcessRequest",
-    "ProcessResponse",
-    "FrameResult",
+    # Enums
+    "ModeEnum",
+    "QualityEnum",
+    "StatusEnum",
+    "TierEnum",
 ]

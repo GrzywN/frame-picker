@@ -10,8 +10,7 @@ from ..dependencies import (
     get_session_service,
     get_usage_service,
 )
-from ..models import FrameResult, ProcessRequest, ProcessResponse
-from ..models.auth import CurrentUser
+from ..models import CurrentUser, FrameResult, ProcessRequest, ProcessResponse
 from ..services.processing_service import ProcessingService
 from ..services.session_service import SessionService
 from ..services.usage_service import UsageService

@@ -1,6 +1,4 @@
-"""
-Base model classes and common functionality
-"""
+"""Base schemas for the application"""
 
 from datetime import datetime
 from typing import Optional
@@ -16,14 +14,13 @@ class BaseResponse(BaseModel):
 
 
 class ErrorResponse(BaseResponse):
-    """Model for error responses"""
+    """Error response model"""
 
     error: str
-    session_id: Optional[str] = None
+    details: Optional[dict] = None
 
 
-class HealthCheck(BaseResponse):
-    """Model for health check response"""
+class SuccessResponse(BaseResponse):
+    """Success response model"""
 
-    status: str
-    version: str
+    success: bool = True

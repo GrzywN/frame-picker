@@ -8,13 +8,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..database.connection import get_db
 from ..dependencies import get_current_user
-from ..models.auth import (
-    CurrentUser,
-    TokenResponse,
-    UserCreate,
-    UserLogin,
-    UserResponse,
-)
+from ..models import CurrentUser, TokenResponse, UserCreate, UserLogin, UserResponse
 from ..repositories.user_repository import UserRepository
 from ..services.usage_service import UsageService
 from ..utils.jwt import create_access_token

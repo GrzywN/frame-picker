@@ -1,11 +1,11 @@
-"""Authentication models"""
+"""Authentication related schemas"""
 
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from ..enums import TierEnum as Tier
+from ...enums import TierEnum as Tier
 
 
 class UserCreate(BaseModel):

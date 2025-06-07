@@ -5,8 +5,13 @@ Tests for processing models
 import pytest
 from pydantic import ValidationError
 
-from api.app.models.common import ModeEnum, QualityEnum
-from api.app.models.processing import FrameResult, ProcessRequest, ProcessResponse
+from api.app.models import (
+    FrameResult,
+    ModeEnum,
+    ProcessRequest,
+    ProcessResponse,
+    QualityEnum,
+)
 
 
 class TestProcessRequest:

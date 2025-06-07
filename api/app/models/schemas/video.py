@@ -1,8 +1,6 @@
-"""
-Video-related models
-"""
+"""Video related schemas"""
 
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
@@ -24,4 +22,4 @@ class VideoUploadResponse(BaseModel):
 
     message: str
     session_id: str
-    file_info: dict
+    file_info: Dict[str, Any]

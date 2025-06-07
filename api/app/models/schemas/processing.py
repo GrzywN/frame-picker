@@ -1,12 +1,10 @@
-"""
-Processing-related models
-"""
+"""Processing related schemas"""
 
 from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from ..enums import ModeEnum, QualityEnum
+from ...enums import ModeEnum, QualityEnum
 
 
 class ProcessRequest(BaseModel):

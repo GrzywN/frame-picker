@@ -4,7 +4,7 @@ Tests for common enums
 
 import pytest
 
-from api.app.enums import ModeEnum, QualityEnum, StatusEnum
+from api.app.models import ModeEnum, QualityEnum, StatusEnum
 
 
 class TestModeEnum:

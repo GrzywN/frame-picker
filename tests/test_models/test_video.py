@@ -5,7 +5,7 @@ Tests for video models
 import pytest
 from pydantic import ValidationError
 
-from api.app.models.video import VideoInfo, VideoUploadResponse
+from api.app.models import VideoInfo, VideoUploadResponse
 
 
 class TestVideoInfo:

@@ -7,9 +7,13 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from api.app.models.processing import ProcessRequest
-from api.app.models.session import SessionCreate, SessionResponse, SessionStatus
-from api.app.models.video import VideoInfo
+from api.app.models import (
+    ProcessRequest,
+    SessionCreate,
+    SessionResponse,
+    SessionStatus,
+    VideoInfo,
+)
 
 
 class TestSessionCreate:
