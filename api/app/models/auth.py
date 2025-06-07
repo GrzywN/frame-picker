@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from ..enums import Tier
+from ..enums import TierEnum as Tier
 
 
 class UserCreate(BaseModel):

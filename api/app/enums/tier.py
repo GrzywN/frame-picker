@@ -1,8 +1,11 @@
 from enum import Enum
 
 
-class Tier(str, Enum):
+class TierEnum(str, Enum):
     """User tier types"""
 
-    FREE = "FREE"
-    PRO = "PRO"
+    free = "FREE"
+    pro = "PRO"
+
+    def __str__(self) -> str:
+        return self.value
