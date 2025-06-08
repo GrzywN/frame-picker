@@ -1729,6 +1729,22 @@ anyio = ">=3.6.2,<5"
 full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.18)", "pyyaml"]
 
 [[package]]
+name = "stripe"
+version = "12.2.0"
+description = "Python bindings for the Stripe API"
+optional = false
+python-versions = ">=3.6"
+groups = ["main"]
+files = [
+    {file = "stripe-12.2.0-py2.py3-none-any.whl", hash = "sha256:cc9086d162e65e32893e4a03c31194e36e07870653a5f30aacc62da61e548cb9"},
+    {file = "stripe-12.2.0.tar.gz", hash = "sha256:1ac2a4abba371acb3f99ff1c4a8748929862ad42d0cdee488298982f1be8d56e"},
+]
+
+[package.dependencies]
+requests = {version = ">=2.20", markers = "python_version >= \"3.0\""}
+typing_extensions = {version = ">=4.5.0", markers = "python_version >= \"3.7\""}
+
+[[package]]
 name = "testcontainers"
 version = "4.10.0"
 description = "Python library for throwaway instances of anything that can run in a Docker container"
@@ -2161,4 +2177,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.3"
-content-hash = "ba1e9b4d90c586766549f1e915750c9fbdfd516a2988ef1f2b5ddb41984d1476"
+content-hash = "399618060b8dcf97b9ab7f9e5a5225e90a781dfd571f30eef1e250c6e901fea7"

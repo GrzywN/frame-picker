@@ -29,6 +29,7 @@ python-jose = {extras = ["cryptography"], version = "3.5.0"}
 bcrypt = "4.3.0"
 testcontainers = {extras = ["postgres"], version = "4.10.0"}
 httpx = "0.28.1"
+stripe = "12.2.0"
 
 [tool.poetry.scripts]
 frame-picker = "frame_picker.cli:main"
