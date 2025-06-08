@@ -4,8 +4,14 @@ setup:
 	@poetry install
 	@docker compose up -d
 
-migrate:
-	@poetry run alembic upgrade head
+db-migrate:
+	@poetry run yoyo apply
+
+db-rollback:
+	@poetry run yoyo rollback
+
+db-status:
+	@poetry run yoyo list
 
 api:
 	@poetry run frame-picker-api
