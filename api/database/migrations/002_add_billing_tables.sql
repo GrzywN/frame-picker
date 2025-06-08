@@ -44,20 +44,3 @@ CREATE INDEX idx_payments_subscription_id ON payments(subscription_id);
 CREATE INDEX idx_payments_stripe_payment_intent_id ON payments(stripe_payment_intent_id);
 CREATE INDEX idx_payments_stripe_invoice_id ON payments(stripe_invoice_id);
 
--- Add triggers for created_at
-CREATE TRIGGER set_subscriptions_created_at
-BEFORE INSERT ON subscriptions
-FOR EACH ROW EXECUTE FUNCTION set_created_at_column();
-
-CREATE TRIGGER set_payments_created_at
-BEFORE INSERT ON payments
-FOR EACH ROW EXECUTE FUNCTION set_created_at_column();
-
--- Add triggers for updated_at
-CREATE TRIGGER update_subscriptions_updated_at
-BEFORE UPDATE ON subscriptions
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_payments_updated_at
-BEFORE UPDATE ON payments
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
