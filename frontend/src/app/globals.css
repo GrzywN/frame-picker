@@ -46,15 +46,6 @@
   --font-weight-small: 400;
   --font-weight-caption: 500;
 
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --spacing-3xl: 64px;
-
   /* Box Shadows */
   --shadow-neo-sm: 2px 2px 0px #000;
   --shadow-neo: 4px 4px 0px #000;
