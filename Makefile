@@ -4,6 +4,9 @@ setup:
 	@poetry install
 	@docker compose up -d
 
+stripe-webhook:
+	@stripe listen --forward-to http://localhost:8000/api/billing/webhook
+
 db-migrate:
 	@poetry run yoyo apply
 
