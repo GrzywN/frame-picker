@@ -5,6 +5,17 @@
 from .auth import CurrentUser, TokenResponse, UserCreate, UserLogin, UserResponse
 from .base import BaseResponse, ErrorResponse, SuccessResponse
 
+# Billing models
+from .billing import (
+    BillingPortalResponse,
+    CheckoutSessionCreate,
+    CheckoutSessionResponse,
+    PaymentCreate,
+    PaymentResponse,
+    SubscriptionCreate,
+    SubscriptionResponse,
+)
+
 # Processing models
 from .processing import FrameResult, ProcessRequest, ProcessResponse
 
@@ -25,6 +36,14 @@ __all__ = [
     "UserCreate",
     "UserLogin",
     "UserResponse",
+    # Billing models
+    "BillingPortalResponse",
+    "CheckoutSessionCreate",
+    "CheckoutSessionResponse",
+    "PaymentCreate",
+    "PaymentResponse",
+    "SubscriptionCreate",
+    "SubscriptionResponse",
     # Processing models
     "FrameResult",
     "ProcessRequest",

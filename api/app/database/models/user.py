@@ -25,3 +25,9 @@ class User(Base):
 
     # Relationships
     sessions = relationship("Session", back_populates="user")
+    subscriptions = relationship(
+        "Subscription", back_populates="user", cascade="all, delete-orphan"
+    )
+    payments = relationship(
+        "Payment", back_populates="user", cascade="all, delete-orphan"
+    )

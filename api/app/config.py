@@ -18,12 +18,9 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # development, staging, production
 
     # CORS Settings
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",  # Next.js dev server
-        "http://localhost:3001",  # Alternative port
-        "https://framepicker.ai",  # Production domain
-        "https://www.framepicker.ai",
-    ]
+    ALLOWED_ORIGINS: str = (
+        "http://localhost:3000,http://localhost:3001,https://framepicker.ai,https://www.framepicker.ai"
+    )
 
     # File Upload Settings
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB for free tier
@@ -69,6 +66,11 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
+
+    @property
+    def allowed_origins(self) -> List[str]:
+        """Get allowed origins for CORS"""
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
     @property
     def is_production(self) -> bool:

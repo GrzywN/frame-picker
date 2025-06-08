@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from .database.connection import get_db
 from .models import CurrentUser
 from .repositories.user_repository import UserRepository
+from .services.billing_service import BillingService
 from .services.processing_service import ProcessingService
 from .services.session_service import SessionService
 from .services.usage_service import UsageService
@@ -41,6 +42,11 @@ def get_user_repository(db: Session = Depends(get_db)) -> UserRepository:
 def get_usage_service(db: Session = Depends(get_db)) -> UsageService:
     """Dependency for UsageService with database session"""
     return UsageService(db)
+
+
+def get_billing_service(db: Session = Depends(get_db)) -> BillingService:
+    """Dependency for BillingService with database session"""
+    return BillingService(db)
 
 
 async def get_current_user_optional(
