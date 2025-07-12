@@ -122,6 +122,7 @@ const UploadZone = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleClick}
+        data-testid="upload-zone"
       >
         <input
           id="file-input"

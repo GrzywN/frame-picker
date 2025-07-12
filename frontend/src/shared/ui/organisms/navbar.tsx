@@ -27,7 +27,7 @@ const Navbar = ({ user, onSignOut, className }: NavbarProps) => {
       'bg-void-black border-b-4 border-electric-blue',
       'px-4 py-4',
       className
-    )}>
+    )} data-testid="navbar">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { authApi } from '@/core/api/auth'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/molecules/card'
 import { FormField } from '@/shared/ui/molecules/form-field'
@@ -108,6 +109,7 @@ export function RegisterForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  minLength={8}
                   disabled={loading}
                   placeholder="At least 8 characters"
                   hint="Minimum 8 characters"
@@ -158,12 +160,12 @@ export function RegisterForm() {
                 <span className="font-mono text-small text-gray-700">
                   Already have an account?{' '}
                 </span>
-                <a 
+                <Link 
                   href="/auth/login" 
                   className="font-mono text-small text-electric-blue hover:text-energy-green font-bold transition-colors"
                 >
                   SIGN IN HERE
-                </a>
+                </Link>
               </div>
             </CardFooter>
           </form>

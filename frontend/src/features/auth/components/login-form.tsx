@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/shared/ui/molecules/card'
 import { FormField } from '@/shared/ui/molecules/form-field'
 import { Button } from '@/shared/ui/atoms/button'
@@ -133,12 +134,12 @@ export function LoginForm() {
                 <span className="font-mono text-small text-gray-700">
                   Don't have an account?{' '}
                 </span>
-                <a 
+                <Link 
                   href="/auth/register" 
                   className="font-mono text-small text-electric-blue hover:text-energy-green font-bold transition-colors"
                 >
                   CREATE ONE HERE
-                </a>
+                </Link>
               </div>
             </CardFooter>
           </form>

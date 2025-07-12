@@ -575,6 +575,7 @@ export default function HomePage() {
                     disabled={isProcessing}
                     loading={isProcessing}
                     className="w-full"
+                    data-testid="start-processing-button"
                   >
                     🚀 START PROCESSING
                   </Button>
