@@ -6,7 +6,11 @@
     "dev": "next dev frontend",
     "build": "next build frontend",
     "start": "next start frontend",
-    "lint": "next lint frontend"
+    "lint": "next lint frontend",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@picocss/pico": "2.1.1",
@@ -23,6 +27,7 @@
     "@types/node": "22.15.29",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.5",
+    "@playwright/test": "^1.45.0",
     "eslint": "9.28.0",
     "eslint-config-next": "15.3.3",
     "tailwindcss": "4.1.8",
