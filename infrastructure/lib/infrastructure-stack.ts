@@ -1,71 +1,70 @@
 import * as cdk from 'aws-cdk-lib';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
-import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
-import { Construct } from 'constructs';
+import type { Construct } from 'constructs';
+import { getConfig } from './config';
+import { ApiInfrastructure } from './constructs/api-infrastructure';
+import { FrontendInfrastructure } from './constructs/frontend-infrastructure';
+import { UploadInfrastructure } from './constructs/upload-infrastructure';
+
+export interface InfrastructureStackProps extends cdk.StackProps {
+  environment?: 'development' | 'staging' | 'production';
+}
 
 export class InfrastructureStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: InfrastructureStackProps) {
     super(scope, id, props);
 
-    // S3 bucket for hosting the frontend
-    const websiteBucket = new s3.Bucket(this, 'FramePickerWebsiteBucket', {
-      bucketName: `frame-picker-frontend-${cdk.Aws.ACCOUNT_ID}-${cdk.Aws.REGION}`,
-      websiteIndexDocument: 'index.html',
-      websiteErrorDocument: 'index.html',
-      publicReadAccess: false,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
+    // Get configuration based on environment
+    const config = getConfig(props?.environment);
+
+    // Frontend infrastructure (S3 + CloudFront)
+    const frontend = new FrontendInfrastructure(this, 'Frontend', {
+      environment: config.environment,
     });
 
-    // Origin Access Control for CloudFront (modern replacement for OAI)
-    const originAccessControl = new cloudfront.S3OriginAccessControl(this, 'FramePickerOAC');
-
-    // CloudFront distribution
-    const distribution = new cloudfront.Distribution(this, 'FramePickerDistribution', {
-      defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(websiteBucket, {
-          originAccessControl: originAccessControl,
-        }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-        compress: true,
-      },
-      defaultRootObject: 'index.html',
-      errorResponses: [
-        {
-          httpStatus: 404,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-        },
-        {
-          httpStatus: 403,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-        },
-      ],
-      priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
+    // API Gateway infrastructure
+    const api = new ApiInfrastructure(this, 'Api', {
+      allowedOrigins: config.allowedOrigins,
+      environment: config.environment,
     });
 
-    // Deploy frontend assets to S3
-    new s3deploy.BucketDeployment(this, 'DeployFramePickerFrontend', {
-      sources: [s3deploy.Source.asset('../frontend-lite/dist')],
-      destinationBucket: websiteBucket,
-      distribution,
-      distributionPaths: ['/*'],
+    // Upload infrastructure (S3 + Lambda)
+    const upload = new UploadInfrastructure(this, 'Upload', {
+      allowedOrigins: config.allowedOrigins,
+      environment: config.environment,
     });
 
-    // Output the CloudFront URL
-    new cdk.CfnOutput(this, 'DistributionDomainName', {
-      value: distribution.distributionDomainName,
+    // Connect upload endpoints to API
+    upload.addToApi(api.api);
+
+    // Stack outputs
+    new cdk.CfnOutput(this, 'Environment', {
+      value: config.environment,
+      description: 'Deployment environment',
+    });
+
+    new cdk.CfnOutput(this, 'FrontendUrl', {
+      value: `https://${frontend.distribution.distributionDomainName}`,
       description: 'Frame Picker Frontend URL',
     });
 
     new cdk.CfnOutput(this, 'DistributionId', {
-      value: distribution.distributionId,
+      value: frontend.distribution.distributionId,
       description: 'CloudFront Distribution ID',
+    });
+
+    new cdk.CfnOutput(this, 'ApiUrl', {
+      value: api.api.url,
+      description: 'Frame Picker API URL',
+    });
+
+    new cdk.CfnOutput(this, 'UploadEndpoint', {
+      value: `${api.api.url}api/upload`,
+      description: 'Upload initiation endpoint',
+    });
+
+    new cdk.CfnOutput(this, 'UploadsBucket', {
+      value: upload.uploadsBucket.bucketName,
+      description: 'S3 bucket for video uploads',
     });
   }
 }
