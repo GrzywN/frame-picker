@@ -29,8 +29,8 @@ export class ApiInfrastructure extends Construct {
         stageName: props.environment,
         throttlingRateLimit: 100,
         throttlingBurstLimit: 200,
-        loggingLevel: apigateway.MethodLoggingLevel.INFO,
-        dataTraceEnabled: props.environment !== 'production',
+        loggingLevel: apigateway.MethodLoggingLevel.OFF,
+        dataTraceEnabled: false,
         metricsEnabled: true,
       },
     });

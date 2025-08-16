@@ -37,6 +37,7 @@ cli-run-action:
 
 deploy:
 	@npm run build
+	@cd infrastructure/lambda/upload && npm run build
 	@cd infrastructure && npm run build && npx cdk deploy --require-approval never
 
 .PHONY: setup migrate api frontend format test cli-run-profile cli-run-action build-frontend deploy deploy-status
