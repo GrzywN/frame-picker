@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.debug,
+.debug * {
+    outline: 1px dashed magenta;
+}
