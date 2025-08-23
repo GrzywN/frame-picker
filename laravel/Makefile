@@ -5,10 +5,10 @@ up:
 	@vendor/bin/sail npm run dev
 
 doc:
-	@vendor/bin/sail artisan ide-helper:eloquent --ansi
-	@vendor/bin/sail artisan ide-helper:generate --ansi
-	@vendor/bin/sail artisan ide-helper:meta --ansi
-	@vendor/bin/sail artisan ide-helper:models --write --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:eloquent --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:generate --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:meta --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:models --write --ansi
 
 refactor:
 	@vendor/bin/sail bin rector --ansi
@@ -27,7 +27,7 @@ frontend-build:
 	@vendor/bin/sail npm run build
 
 test:
-	@vendor/bin/sail artisan test --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan test --ansi
 	@vendor/bin/sail npm run test
 
 pre-commit:
@@ -50,19 +50,20 @@ build:
 		composer install --ignore-platform-reqs
 	@vendor/bin/sail build --no-cache
 	@vendor/bin/sail up -d
+	@vendor/bin/sail exec laravel.test chown -R sail:sail /var/www/html/vendor
 	@vendor/bin/sail npm install
-	@vendor/bin/sail artisan storage:unlink --ansi
-	@vendor/bin/sail artisan storage:link --ansi
-	@vendor/bin/sail artisan key:generate --ansi
-	@vendor/bin/sail artisan migrate --force --ansi
-	@vendor/bin/sail artisan db:seed --force --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan storage:unlink --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan storage:link --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan key:generate --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan migrate --force --ansi
+	@vendor/bin/sail exec --user sail laravel.test php artisan db:seed --force --ansi
 
 _pre-commit-check:
 	@echo "🔍 Checking documentation generators..."
-	@vendor/bin/sail artisan ide-helper:eloquent --ansi || exit 1
-	@vendor/bin/sail artisan ide-helper:generate --ansi || exit 1
-	@vendor/bin/sail artisan ide-helper:meta --ansi || exit 1
-	@vendor/bin/sail artisan ide-helper:models --write --ansi || exit 1
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:eloquent --ansi || exit 1
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:generate --ansi || exit 1
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:meta --ansi || exit 1
+	@vendor/bin/sail exec --user sail laravel.test php artisan ide-helper:models --write --ansi || exit 1
 	@echo "✓ Documentation checks passed"
 
 	@echo "\n🔍 Checking code quality with Rector..."
@@ -90,7 +91,7 @@ _pre-commit-check:
 	@echo "✓ Frontend build checks passed"
 
 	@echo "\n🔍 Running tests..."
-	@vendor/bin/sail artisan test --ansi || exit 1
+	@vendor/bin/sail exec --user sail laravel.test php artisan test --ansi || exit 1
 	@vendor/bin/sail npm run test || exit 1
 	@echo "✓ All tests passed"
 
