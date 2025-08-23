@@ -1,1 +1,0 @@
-"""Repositories tests package"""
